@@ -1,9 +1,9 @@
 [package]
-name = "yobicashd"
+name = "yobicash-rs"
 version = "0.1.0"
 authors = ["Christian Nyumbayire <chritchens@gmail.com>"]
 license = "MIT"
-description = "Yobicash node"
+description = "Yobicash Rust Client"
 repository = "https://github.com/yobicash/yobicash"
 readme = "README.md"
 keywords = ["cli", "cryptocurrency", "storage", "network", "p2p"]
