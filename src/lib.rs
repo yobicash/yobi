@@ -1,4 +1,5 @@
 extern crate libyobicash;
+extern crate unqlite;
 
 pub mod config;
 pub mod info;
