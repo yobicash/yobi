@@ -10,10 +10,10 @@ use libyobicash::input::YInput;
 use libyobicash::output::YOutput;
 use libyobicash::utxo::YUTXO;
 use libyobicash::transaction::YTransaction;
-use info::*;
-use peer::*;
-use wallet::*;
-use simple_output::*;
+use models::info::*;
+use models::peer::*;
+use models::wallet::*;
+use models::output::*;
 
 // NB: for errors: std::io::Error
 //     for YResult would wrap std::io::Error in these cases

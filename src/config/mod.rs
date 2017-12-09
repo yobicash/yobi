@@ -4,7 +4,7 @@ use libyobicash::crypto::hash::sha::YSHA512;
 use libyobicash::transaction::YTransaction;
 use libyobicash::coinbase::YCoinbase;
 
-use peer::YPeer;
+use models::peer::YPeer;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct YConfig {
