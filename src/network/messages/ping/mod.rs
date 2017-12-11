@@ -2,17 +2,20 @@ use libyobicash::utils::time::YTime;
 use libyobicash::crypto::elliptic::keys::YPublicKey;
 use libyobicash::amount::YAmount;
 use libyobicash::errors::*;
+use network::method::YMethod;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct YPing {
+pub struct YPingResponse {
+    pub method: YMethod,
     pub time: YTime,
     pub public_key: YPublicKey,
     pub price: YAmount,
 }
 
-impl YPing {
-    pub fn new(pk: YPublicKey, price: &YAmount) -> YResult<YPing> {
+impl YPingResponse {
+    pub fn new(pk: YPublicKey, price: &YAmount) -> YResult<YPingResponse> {
         Ok(YPing {
+            method: YMethod::Ping,
             time: YTime::now(),
             public_key: pk.to_bytes()?,
             price: price.to_string()?,
@@ -23,15 +26,7 @@ impl YPing {
         unreachable!()
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YPing> {
-        unreachable!()
-    }
-
-    pub fn to_hex(&self) -> YResult<String> {
-        unreachable!()
-    }
-
-    pub fn from_hex(buf: &str) -> YResult<YPing> {
+    pub fn from_bytes(buf: &[u8]) -> YResult<YPingResponse> {
         unreachable!()
     }
 }

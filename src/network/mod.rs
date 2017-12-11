@@ -1,3 +1,4 @@
+pub mod method;
 pub mod codec;
 pub mod protocol;
 pub mod service;
