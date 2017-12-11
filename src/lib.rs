@@ -1,9 +1,4 @@
 extern crate libyobicash;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate serde_json;
 extern crate bytes;
 extern crate chrono;
 extern crate semver;

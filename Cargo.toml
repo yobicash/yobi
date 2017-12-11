@@ -13,9 +13,6 @@ categories = ["cryptography", "database", "network-programming"]
 semver = { version = "^0.9", features = ["serde"] }
 chrono = { version = "^0.4", features = ["serde"] }
 bytes = { version = "^0.4", features = ["serde"] }
-serde = "^1"
-serde_derive = "^1"
-serde_json = "^1"
 futures = "^0.1"
 futures-await = "^0.1"
 unqlite = "^1.3"
