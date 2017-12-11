@@ -16,6 +16,12 @@ pub enum YMethod {
     Unknown,
 }
 
+impl Default for YMethod {
+    fn default() -> YMethod {
+        YMethod::Unknown
+    }
+}
+
 impl From<u32> for YMethod {
     fn from(n: u32) -> YMethod {
         match n {
@@ -41,7 +47,7 @@ impl YMethod {
     }
 
     pub fn from_bytes(b: &[u8]) -> YResult<YMethod> {
-        if b.len() != 8 {
+        if b.len() != 4 {
             return Err(YErrorKind::InvalidLength.into());
         }
         Ok(BigEndian::read_u32(b).into())
