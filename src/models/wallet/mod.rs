@@ -18,6 +18,6 @@ pub struct YCoin {
 pub struct YWallet {
     pub name: String,
     pub balance: YAmount,
-    pub stxos: Vec<YCoin>,
-    pub utxos: Vec<YCoin>,
+    pub scoins: Vec<YCoin>,
+    pub ucoins: Vec<YCoin>,
 }

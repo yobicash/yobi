@@ -9,6 +9,7 @@ extern crate tokio_io;
 extern crate tokio_proto;
 extern crate tokio_service;
 
+pub mod version;
 pub mod config;
 pub mod models;
 pub mod api;
@@ -16,3 +17,5 @@ pub mod store;
 pub mod network;
 pub mod manager;
 pub mod cli;
+
+pub const VERSION: &str = "0.1.0";

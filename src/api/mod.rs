@@ -50,8 +50,8 @@ impl YAPI {
         let wallet = YWallet {
             name: name,
             balance: YAmount::from_u64(1_000)?,
-            stxos: vec![],
-            utxos: vec![],
+            scoins: vec![],
+            ucoins: vec![],
         };
         Ok(wallet)
     }
@@ -80,8 +80,8 @@ impl YAPI {
         let wallet = YWallet {
             name: name,
             balance: YAmount::from_u64(1_000)?,
-            stxos: vec![stxo],
-            utxos: vec![utxo],
+            scoins: vec![stxo],
+            ucoins: vec![utxo],
         };
         Ok(wallet)
     }
