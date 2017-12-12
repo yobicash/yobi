@@ -8,11 +8,11 @@ pub enum YMethod {
     ListPeers=1,
     ListData=2,
     GetData=3,
-    ListTransactions=4,
-    GetTransaction=5,
-    ConfirmTransaction=6,
-    ListCoinbases=7,
-    GetCoinbase=8,
+    ListTxAncestors=4,
+    GetTx=5,
+    ConfirmTx=6,
+    ListCbs=7,
+    GetCb=8,
     Unknown,
 }
 
@@ -29,11 +29,11 @@ impl From<u32> for YMethod {
             1 => YMethod::ListPeers,
             2 => YMethod::ListData,
             3 => YMethod::GetData,
-            4 => YMethod::ListTransactions,
-            5 => YMethod::GetTransaction,
-            6 => YMethod::ConfirmTransaction,
-            7 => YMethod::ListCoinbases,
-            8 => YMethod::GetCoinbase,
+            4 => YMethod::ListTxAncestors,
+            5 => YMethod::GetTx,
+            6 => YMethod::ConfirmTx,
+            7 => YMethod::ListCbs,
+            8 => YMethod::GetCb,
             _ => YMethod::Unknown,
         }
     }
