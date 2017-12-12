@@ -142,6 +142,7 @@ impl YListPeersRes {
             let size = BigEndian::read_u32(peers_buf.get(i..i+4).unwrap()) as usize;
             ls_peers_res.peers.push(YPeer::from_bytes(b.get(i+4..i+4+size).unwrap())?);
         }
+        ls_peers_res.check()?;
         Ok(ls_peers_res)
     }
 }
