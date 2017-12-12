@@ -11,8 +11,7 @@ pub enum YMethod {
     ListTxAncestors=4,
     GetTx=5,
     ConfirmTx=6,
-    ListCbs=7,
-    GetCb=8,
+    GetCb=7,
     Unknown,
 }
 
@@ -32,8 +31,7 @@ impl From<u32> for YMethod {
             4 => YMethod::ListTxAncestors,
             5 => YMethod::GetTx,
             6 => YMethod::ConfirmTx,
-            7 => YMethod::ListCbs,
-            8 => YMethod::GetCb,
+            7 => YMethod::GetCb,
             _ => YMethod::Unknown,
         }
     }

@@ -214,7 +214,7 @@ pub struct YGetTxRes {
 }
 
 impl YGetTxRes {
-    pub fn new(id: u32, count: u32, tx: &YTransaction) -> YGetTxRes {
+    pub fn new(id: u32, tx: &YTransaction) -> YGetTxRes {
         YGetTxRes {
             version: default_version(),
             method: YMethod::GetTx,
