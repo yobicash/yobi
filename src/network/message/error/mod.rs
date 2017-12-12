@@ -12,18 +12,16 @@ pub struct YErrorRes {
     pub method: YMethod,
     pub id: u32,
     pub time: YTime,
-    pub code: u32,
     pub message: String,
 }
 
 impl YErrorRes {
-    pub fn new(method: YMethod, id: u32, code: u32, message: String) -> YErrorRes {
+    pub fn new(method: YMethod, id: u32, message: String) -> YErrorRes {
         YErrorRes {
             version: default_version(),
             method: method,
             id: id,
             time: YTime::now(),
-            code: code,
             message: message,
         }
     }
@@ -43,7 +41,6 @@ impl YErrorRes {
         buf.put(self.method.to_bytes());
         buf.put_u32::<BigEndian>(self.id as u32);
         buf.put(&self.time.to_bytes()[..]);
-        buf.put_u32::<BigEndian>(self.code as u32);
         let msg_buf = self.message.as_bytes();
         buf.put_u32::<BigEndian>(msg_buf.len() as u32);
         buf.put(msg_buf);
