@@ -110,7 +110,7 @@ impl YGetCbRes {
     }
 
     pub fn from_bytes(buf: &[u8]) -> YResult<YGetCbRes> {
-        if buf.len() < 48 {
+        if buf.len() < 44 {
             return Err(YErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();

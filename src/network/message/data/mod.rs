@@ -247,7 +247,7 @@ impl YGetDataRes {
     }
 
     pub fn from_bytes(buf: &[u8]) -> YResult<YGetDataRes> {
-        if buf.len() < 48 {
+        if buf.len() < 44 {
             return Err(YErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
