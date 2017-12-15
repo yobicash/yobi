@@ -7,7 +7,7 @@ use errors::*;
 use models::peer::YPeer;
 use config::YConfig;
 
-pub trait YRPCMethods {
+pub trait YRPCRPCMethods {
     type API;
 
     fn info(&self) -> YHResult<String>; // TODO

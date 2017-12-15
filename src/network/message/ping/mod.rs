@@ -2,24 +2,24 @@ use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::crypto::elliptic::keys::YPublicKey;
 use libyobicash::amount::YAmount;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
-use network::method::YMethod;
+use network::rpc_method::YRPCMethod;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YPingReq {
-    pub method: YMethod,
+    pub method: YRPCMethod,
 }
 
 impl YPingReq {
     pub fn new() -> YPingReq {
         YPingReq {
-            method: YMethod::Ping,
+            method: YRPCMethod::Ping,
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::Ping {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::Ping {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -43,7 +43,7 @@ impl YPingReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YPingRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub public_key: YPublicKey,
     pub price: YAmount,
 }
@@ -51,15 +51,15 @@ pub struct YPingRes {
 impl YPingRes {
     pub fn new(pk: YPublicKey, price: &YAmount) -> YHResult<YPingRes> {
         Ok(YPingRes {
-            method: YMethod::Ping,
+            method: YRPCMethod::Ping,
             public_key: pk,
             price: price.clone(),
         })
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::Ping {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::Ping {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }

@@ -17,7 +17,7 @@ use errors::*;
 
 // NB: for errors: std::io::Error
 //     for YHResult would wrap std::io::Error in these cases
-// NB: all the list methods return only the primary keys
+// NB: all the list RPCMethods return only the primary keys
 pub struct YAPI;
 
 impl YAPI {

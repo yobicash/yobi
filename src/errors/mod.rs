@@ -18,8 +18,12 @@ error_chain! {
   }
 
   errors {
-    InvalidMessageMethod {
-        description("Invalid message method")
+    InvalidCoinKind {
+        description("Invalid coin kind")
+    }
+
+    InvalidRPCMethod {
+        description("Invalid message RPCMethod")
     }
 
     InvalidMessageKind {

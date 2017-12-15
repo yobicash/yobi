@@ -2,26 +2,26 @@ use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::data::YData;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
-use network::method::YMethod;
+use network::rpc_method::YRPCMethod;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YListDataReq {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub tx_id: YDigest64,
 }
 
 impl YListDataReq {
     pub fn new(tx_id: YDigest64) -> YListDataReq {
         YListDataReq {
-            method: YMethod::ListData,
+            method: YRPCMethod::ListData,
             tx_id: tx_id,
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::ListData {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::ListData {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -53,7 +53,7 @@ impl YListDataReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YListDataRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub count: u32,
     pub data: Vec<YData>,
 }
@@ -61,15 +61,15 @@ pub struct YListDataRes {
 impl YListDataRes {
     pub fn new(data: &Vec<YData>) -> YListDataRes {
         YListDataRes {
-            method: YMethod::ListData,
+            method: YRPCMethod::ListData,
             count: data.len() as u32,
             data: data.clone(),
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::ListData {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::ListData {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         if self.data.len() != self.count as usize {
             return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
@@ -117,21 +117,21 @@ impl YListDataRes {
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YGetDataReq {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub checksum: YDigest64,
 }
 
 impl YGetDataReq {
     pub fn new(checksum: YDigest64) -> YGetDataReq {
         YGetDataReq {
-            method: YMethod::GetData,
+            method: YRPCMethod::GetData,
             checksum: checksum,
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::GetData {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::GetData {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -163,21 +163,21 @@ impl YGetDataReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YGetDataRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub data: YData,
 }
 
 impl YGetDataRes {
     pub fn new(data: &YData) -> YGetDataRes {
         YGetDataRes {
-            method: YMethod::GetData,
+            method: YRPCMethod::GetData,
             data: data.clone(),
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::GetData {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::GetData {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }

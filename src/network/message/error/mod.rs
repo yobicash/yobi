@@ -1,16 +1,16 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
-use network::method::YMethod;
+use network::rpc_method::YRPCMethod;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YHErrorRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub message: String,
 }
 
 impl YHErrorRes {
-    pub fn new(method: YMethod, message: String) -> YHErrorRes {
+    pub fn new(method: YRPCMethod, message: String) -> YHErrorRes {
         YHErrorRes {
             method: method,
             message: message,

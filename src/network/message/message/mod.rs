@@ -6,7 +6,7 @@ use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::hash::sha::YSHA512;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use std::convert::From;
-use network::method::*;
+use network::rpc_method::*;
 use version::*;
 use errors::*;
 
@@ -104,14 +104,14 @@ pub struct YMessage {
     pub version: YVersion,
     pub time: YTime,
     pub nonce: u32,
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub kind: YMessageKind,
     pub status: YMessageStatus,
     pub payload: Vec<u8>,
 }
 
 impl YMessage {
-    pub fn new(method: YMethod, kind: YMessageKind, status: YMessageStatus, payload: &Vec<u8>) -> YHResult<YMessage> {
+    pub fn new(method: YRPCMethod, kind: YMessageKind, status: YMessageStatus, payload: &Vec<u8>) -> YHResult<YMessage> {
         let mut msg = YMessage {
             id: YDigest64::default(),
             version: default_version(),

@@ -2,26 +2,26 @@ use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::coinbase::YCoinbase;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
-use network::method::YMethod;
+use network::rpc_method::YRPCMethod;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YGetCbReq {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub cb_id: YDigest64,
 }
 
 impl YGetCbReq {
     pub fn new(cb_id: YDigest64) -> YGetCbReq {
         YGetCbReq {
-            method: YMethod::GetCb,
+            method: YRPCMethod::GetCb,
             cb_id: cb_id,
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::GetCb {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::GetCb {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -53,21 +53,21 @@ impl YGetCbReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YGetCbRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub cb: YCoinbase,
 }
 
 impl YGetCbRes {
     pub fn new(cb: &YCoinbase) -> YGetCbRes {
         YGetCbRes {
-            method: YMethod::GetCb,
+            method: YRPCMethod::GetCb,
             cb: cb.clone(),
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::GetCb {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::GetCb {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }

@@ -3,26 +3,26 @@ use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::transaction::YTransaction;
 use libyobicash::coinbase::YCoinbase;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
-use network::method::YMethod;
+use network::rpc_method::YRPCMethod;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YListTxAncestorsReq {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub tx_id: YDigest64,
 }
 
 impl YListTxAncestorsReq {
     pub fn new(tx_id: YDigest64) -> YListTxAncestorsReq {
         YListTxAncestorsReq {
-            method: YMethod::ListTxAncestors,
+            method: YRPCMethod::ListTxAncestors,
             tx_id: tx_id,
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::ListTxAncestors {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::ListTxAncestors {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -54,7 +54,7 @@ impl YListTxAncestorsReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YListTxAncestorsRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub count: u32,
     pub txs: Vec<YTransaction>,
 }
@@ -62,15 +62,15 @@ pub struct YListTxAncestorsRes {
 impl YListTxAncestorsRes {
     pub fn new(txs: &Vec<YTransaction>) -> YListTxAncestorsRes {
         YListTxAncestorsRes {
-            method: YMethod::ListTxAncestors,
+            method: YRPCMethod::ListTxAncestors,
             count: txs.len() as u32,
             txs: txs.clone(),
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::ListTxAncestors {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::ListTxAncestors {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         if self.txs.len() != self.count as usize {
             return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
@@ -119,21 +119,21 @@ impl YListTxAncestorsRes {
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YGetTxReq {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub tx_id: YDigest64,
 }
 
 impl YGetTxReq {
     pub fn new(tx_id: YDigest64) -> YGetTxReq {
         YGetTxReq {
-            method: YMethod::GetTx,
+            method: YRPCMethod::GetTx,
             tx_id: tx_id,
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::GetTx {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::GetTx {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -165,21 +165,21 @@ impl YGetTxReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YGetTxRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub tx: YTransaction,
 }
 
 impl YGetTxRes {
     pub fn new(tx: &YTransaction) -> YGetTxRes {
         YGetTxRes {
-            method: YMethod::GetTx,
+            method: YRPCMethod::GetTx,
             tx: tx.clone(),
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::GetTx {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::GetTx {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -211,21 +211,21 @@ impl YGetTxRes {
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YConfirmTxReq {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub tx_id: YDigest64,
 }
 
 impl YConfirmTxReq {
     pub fn new(tx_id: YDigest64) -> YConfirmTxReq {
         YConfirmTxReq {
-            method: YMethod::ConfirmTx,
+            method: YRPCMethod::ConfirmTx,
             tx_id: tx_id,
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::ConfirmTx {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::ConfirmTx {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -257,7 +257,7 @@ impl YConfirmTxReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YConfirmTxRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub ack: bool,
     pub cb: YCoinbase,
 }
@@ -265,15 +265,15 @@ pub struct YConfirmTxRes {
 impl YConfirmTxRes {
     pub fn new(ack: bool, cb: &YCoinbase) -> YConfirmTxRes {
         YConfirmTxRes {
-            method: YMethod::ConfirmTx,
+            method: YRPCMethod::ConfirmTx,
             ack: ack,
             cb: cb.clone(),
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::ConfirmTx {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::ConfirmTx {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }

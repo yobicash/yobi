@@ -1,26 +1,26 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use models::peer::YPeer;
-use network::method::YMethod;
+use network::rpc_method::YRPCMethod;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YListPeersReq {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub max: u32,
 }
 
 impl YListPeersReq {
     pub fn new(max: u32) -> YListPeersReq {
         YListPeersReq {
-            method: YMethod::ListPeers,
+            method: YRPCMethod::ListPeers,
             max: max,
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::ListPeers {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::ListPeers {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         Ok(())
     }
@@ -52,7 +52,7 @@ impl YListPeersReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YListPeersRes {
-    pub method: YMethod,
+    pub method: YRPCMethod,
     pub count: u32,
     pub peers: Vec<YPeer>,
 }
@@ -60,15 +60,15 @@ pub struct YListPeersRes {
 impl YListPeersRes {
     pub fn new(peers: &Vec<YPeer>) -> YListPeersRes {
         YListPeersRes {
-            method: YMethod::ListPeers,
+            method: YRPCMethod::ListPeers,
             count: peers.len() as u32,
             peers: peers.clone(),
         }
     }
 
     pub fn check(&self) -> YHResult<()> {
-        if self.method != YMethod::ListPeers {
-            return Err(YHErrorKind::InvalidMessageMethod.into());
+        if self.method != YRPCMethod::ListPeers {
+            return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         if self.peers.len() != self.count as usize {
             return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());

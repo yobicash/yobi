@@ -1,4 +1,4 @@
-pub mod method;
+pub mod rpc_method;
 pub mod message;
 pub mod codec;
 pub mod protocol;
