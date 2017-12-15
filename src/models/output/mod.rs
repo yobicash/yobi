@@ -1,6 +1,5 @@
 use libyobicash::amount::YAmount;
 use libyobicash::crypto::elliptic::keys::*;
-use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct YAmountOutput {

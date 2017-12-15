@@ -1,5 +1,4 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
-use libyobicash::errors::YError as LibError;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::coinbase::YCoinbase;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};

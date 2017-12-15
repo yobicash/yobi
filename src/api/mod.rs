@@ -67,7 +67,6 @@ impl YAPI {
             tx_id: YDigest64::from_bytes(YRandom::bytes(64).as_slice())?,
             idx: 0,
             amount: YAmount::from_u64(1_000)?,
-            has_data: true,
         };
         let utxo = YCoin {
             date: YTime::now(),
@@ -75,7 +74,6 @@ impl YAPI {
             tx_id: YDigest64::from_bytes(YRandom::bytes(64).as_slice())?,
             idx: 0,
             amount: YAmount::from_u64(1_000)?,
-            has_data: true,
         };
         let wallet = YWallet {
             name: name,

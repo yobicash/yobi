@@ -1,5 +1,4 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
-use libyobicash::errors::YError as LibError;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use models::peer::YPeer;
 use network::method::YMethod;

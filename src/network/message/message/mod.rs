@@ -1,5 +1,4 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
-use libyobicash::errors::YError as LibError;
 use libyobicash::utils::random::*;
 use libyobicash::utils::time::*;
 use libyobicash::utils::version::*;

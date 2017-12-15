@@ -1,8 +1,6 @@
-use libyobicash::utils::random::YRandom;
+use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::utils::time::YTime;
-use libyobicash::crypto::hash::sha::YSHA512;
-use libyobicash::transaction::YTransaction;
-use libyobicash::coinbase::YCoinbase;
+use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -29,19 +27,39 @@ impl YPeer {
         }
     }
 
+    pub fn check(&self) -> YHResult<()> {
+        if self.last_time > YTime::now() {
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidTime).into());
+        }
+        Ok(())
+    }
+
     pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
-        unreachable!()
+        let mut buf = BytesMut::new();
+        buf.put(&self.ip[..]);
+        buf.put_u16::<BigEndian>(self.port);
+        buf.put(&self.last_time.to_bytes()[..]);
+        Ok(buf.to_vec())
     }
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YPeer> {
-        unreachable!()
-    }
-
-    pub fn to_hex(&self) -> YHResult<String> {
-        unreachable!()
-    }
-
-    pub fn from_hex(s: &str) -> YHResult<YPeer> {
-        unreachable!()
+        if buf.len() != 14 {
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+        }
+        let mut b = BytesMut::new();
+        b.extend_from_slice(buf);
+        let mut ip = [0u8; 4];
+        for i in 0..4 {
+            ip[i] = b[i]
+        }
+        let port = BigEndian::read_u16(b.get(4..6).unwrap());
+        let last_time = YTime::from_bytes(b.get(6..).unwrap())?;
+        let peer = YPeer {
+            ip: ip,
+            port: port,
+            last_time: last_time,
+        };
+        peer.check()?;
+        Ok(peer)
     }
 }
