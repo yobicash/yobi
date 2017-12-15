@@ -1,39 +1,25 @@
-use libyobicash::utils::version::YVersion;
-use libyobicash::utils::time::YTime;
-use libyobicash::utils::random::YRandom;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::transaction::YTransaction;
 use libyobicash::coinbase::YCoinbase;
 use libyobicash::errors::*;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use network::method::YMethod;
-use version::default_version;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YListTxAncestorsReq {
-    pub version: YVersion,
     pub method: YMethod,
-    pub id: u32,
-    pub time: YTime,
     pub tx_id: YDigest64,
 }
 
 impl YListTxAncestorsReq {
     pub fn new(tx_id: YDigest64) -> YListTxAncestorsReq {
         YListTxAncestorsReq {
-            version: default_version(),
             method: YMethod::ListTxAncestors,
-            id: YRandom::u32(),
-            time: YTime::now(),
             tx_id: tx_id,
         }
     }
 
     pub fn check(&self) -> YResult<()> {
-        if self.version != default_version() {
-            let verstring = self.version.to_string();
-            return Err(YErrorKind::InvalidVersion(verstring).into());
-        }
         if self.method != YMethod::ListTxAncestors {
             return Err(YErrorKind::Other("Invalid method".to_string()).into());
         }
@@ -43,26 +29,23 @@ impl YListTxAncestorsReq {
     pub fn to_bytes(&self) -> YResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
-        buf.put(&self.version.to_bytes()?[..]);
         buf.put(self.method.to_bytes());
-        buf.put_u32::<BigEndian>(self.id as u32);
-        buf.put(&self.time.to_bytes()[..]);
         buf.put(self.tx_id.to_bytes());
         Ok(buf.to_vec())
     }
 
     pub fn from_bytes(buf: &[u8]) -> YResult<YListTxAncestorsReq> {
-        if buf.len() != 108 {
+        if buf.len() != 68 {
             return Err(YErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let mut ls_txs_req = YListTxAncestorsReq::default();
-        ls_txs_req.version = YVersion::from_bytes(b.get(4..28).unwrap())?;
-        ls_txs_req.method = BigEndian::read_u32(b.get(28..32).unwrap()).into();
-        ls_txs_req.id = BigEndian::read_u32(b.get(32..36).unwrap());
-        ls_txs_req.time = YTime::from_bytes(b.get(36..44).unwrap())?;
-        ls_txs_req.tx_id = YDigest64::from_bytes(b.get(44..).unwrap())?;
+        let method = BigEndian::read_u32(b.get(0..4).unwrap()).into();
+        let tx_id = YDigest64::from_bytes(b.get(4..).unwrap())?;
+        let ls_txs_req = YListTxAncestorsReq {
+            method: method,
+            tx_id: tx_id,
+        };
         ls_txs_req.check()?;
         Ok(ls_txs_req)
     }
@@ -70,38 +53,25 @@ impl YListTxAncestorsReq {
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YListTxAncestorsRes {
-    pub version: YVersion,
     pub method: YMethod,
-    pub id: u32,
-    pub time: YTime,
     pub count: u32,
-    pub tx: Vec<YTransaction>,
+    pub txs: Vec<YTransaction>,
 }
 
 impl YListTxAncestorsRes {
-    pub fn new(id: u32, count: u32, tx: &Vec<YTransaction>) -> YResult<YListTxAncestorsRes> {
-        if tx.len() != count as usize {
-            return Err(YErrorKind::InvalidLength.into());
-        }
-        Ok(YListTxAncestorsRes {
-            version: default_version(),
+    pub fn new(txs: &Vec<YTransaction>) -> YListTxAncestorsRes {
+        YListTxAncestorsRes {
             method: YMethod::ListTxAncestors,
-            id: id,
-            time: YTime::now(),
-            count: count,
-            tx: tx.clone(),
-        })
+            count: txs.len() as u32,
+            txs: txs.clone(),
+        }
     }
 
     pub fn check(&self) -> YResult<()> {
-        if self.version != default_version() {
-            let verstring = self.version.to_string();
-            return Err(YErrorKind::InvalidVersion(verstring).into());
-        }
         if self.method != YMethod::ListTxAncestors {
             return Err(YErrorKind::Other("Invalid method".to_string()).into());
         }
-        if self.tx.len() != self.count as usize {
+        if self.txs.len() != self.count as usize {
             return Err(YErrorKind::InvalidLength.into());
         }
         Ok(())
@@ -110,13 +80,10 @@ impl YListTxAncestorsRes {
     pub fn to_bytes(&self) -> YResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
-        buf.put(&self.version.to_bytes()?[..]);
         buf.put(self.method.to_bytes());
-        buf.put_u32::<BigEndian>(self.id as u32);
-        buf.put(&self.time.to_bytes()[..]);
         buf.put_u32::<BigEndian>(self.count as u32);
         for i in 0..self.count as usize {
-            let tx_buf = self.tx[i].to_bytes()?;
+            let tx_buf = self.txs[i].to_bytes()?;
             let tx_size = tx_buf.len();
             buf.put_u32::<BigEndian>(tx_size as u32);
             buf.put(tx_buf);
@@ -130,47 +97,40 @@ impl YListTxAncestorsRes {
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let mut ls_txs_res = YListTxAncestorsRes::default();
-        ls_txs_res.version = YVersion::from_bytes(b.get(4..28).unwrap())?;
-        ls_txs_res.method = BigEndian::read_u32(b.get(28..32).unwrap()).into();
-        ls_txs_res.id = BigEndian::read_u32(b.get(32..36).unwrap());
-        ls_txs_res.time = YTime::from_bytes(b.get(36..44).unwrap())?;
-        ls_txs_res.count = BigEndian::read_u32(b.get(44..48).unwrap());
+        let method = BigEndian::read_u32(b.get(0..4).unwrap()).into();
+        let count = BigEndian::read_u32(b.get(4..8).unwrap());
         let mut tx_buf = BytesMut::new();
-        tx_buf.extend_from_slice(b.get(48..).unwrap());
-        for i in 0..ls_txs_res.count as usize {
+        tx_buf.extend_from_slice(b.get(8..).unwrap());
+        let mut txs = Vec::new();
+        for i in 0..count as usize {
             let size = BigEndian::read_u32(tx_buf.get(i..i+4).unwrap()) as usize;
-            ls_txs_res.tx.push(YTransaction::from_bytes(b.get(i+4..i+4+size).unwrap())?);
+            txs.push(YTransaction::from_bytes(b.get(i+4..i+4+size).unwrap())?);
         }
+        let ls_txs_res = YListTxAncestorsRes {
+            method: method,
+            count: count,
+            txs: txs,
+        };
+        ls_txs_res.check()?;
         Ok(ls_txs_res)
     }
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YGetTxReq {
-    pub version: YVersion,
     pub method: YMethod,
-    pub id: u32,
-    pub time: YTime,
     pub tx_id: YDigest64,
 }
 
 impl YGetTxReq {
     pub fn new(tx_id: YDigest64) -> YGetTxReq {
         YGetTxReq {
-            version: default_version(),
             method: YMethod::GetTx,
-            id: YRandom::u32(),
-            time: YTime::now(),
             tx_id: tx_id,
         }
     }
 
     pub fn check(&self) -> YResult<()> {
-        if self.version != default_version() {
-            let verstring = self.version.to_string();
-            return Err(YErrorKind::InvalidVersion(verstring).into());
-        }
         if self.method != YMethod::GetTx {
             return Err(YErrorKind::Other("Invalid method".to_string()).into());
         }
@@ -180,56 +140,43 @@ impl YGetTxReq {
     pub fn to_bytes(&self) -> YResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
-        buf.put(&self.version.to_bytes()?[..]);
         buf.put(self.method.to_bytes());
-        buf.put_u32::<BigEndian>(self.id as u32);
-        buf.put(&self.time.to_bytes()[..]);
         buf.put(self.tx_id.to_bytes());
         Ok(buf.to_vec())
     }
 
     pub fn from_bytes(buf: &[u8]) -> YResult<YGetTxReq> {
-        if buf.len() != 108 {
+        if buf.len() != 68 {
             return Err(YErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let mut ls_txs_req = YGetTxReq::default();
-        ls_txs_req.version = YVersion::from_bytes(b.get(4..28).unwrap())?;
-        ls_txs_req.method = BigEndian::read_u32(b.get(28..32).unwrap()).into();
-        ls_txs_req.id = BigEndian::read_u32(b.get(32..36).unwrap());
-        ls_txs_req.time = YTime::from_bytes(b.get(36..44).unwrap())?;
-        ls_txs_req.tx_id = YDigest64::from_bytes(b.get(44..).unwrap())?;
-        ls_txs_req.check()?;
-        Ok(ls_txs_req)
+        let method = BigEndian::read_u32(b.get(28..32).unwrap()).into();
+        let tx_id = YDigest64::from_bytes(b.get(44..).unwrap())?;
+        let get_tx_req = YGetTxReq {
+            method: method,
+            tx_id: tx_id,
+        };
+        get_tx_req.check()?;
+        Ok(get_tx_req)
     }
 }
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YGetTxRes {
-    pub version: YVersion,
     pub method: YMethod,
-    pub id: u32,
-    pub time: YTime,
     pub tx: YTransaction,
 }
 
 impl YGetTxRes {
-    pub fn new(id: u32, tx: &YTransaction) -> YGetTxRes {
+    pub fn new(tx: &YTransaction) -> YGetTxRes {
         YGetTxRes {
-            version: default_version(),
             method: YMethod::GetTx,
-            id: id,
-            time: YTime::now(),
             tx: tx.clone(),
         }
     }
 
     pub fn check(&self) -> YResult<()> {
-        if self.version != default_version() {
-            let verstring = self.version.to_string();
-            return Err(YErrorKind::InvalidVersion(verstring).into());
-        }
         if self.method != YMethod::GetTx {
             return Err(YErrorKind::Other("Invalid method".to_string()).into());
         }
@@ -239,26 +186,23 @@ impl YGetTxRes {
     pub fn to_bytes(&self) -> YResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
-        buf.put(&self.version.to_bytes()?[..]);
         buf.put(self.method.to_bytes());
-        buf.put_u32::<BigEndian>(self.id as u32);
-        buf.put(&self.time.to_bytes()[..]);
         buf.put(self.tx.to_bytes()?);
         Ok(buf.to_vec())
     }
 
     pub fn from_bytes(buf: &[u8]) -> YResult<YGetTxRes> {
-        if buf.len() < 44 {
+        if buf.len() < 108 {
             return Err(YErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let mut get_tx_res = YGetTxRes::default();
-        get_tx_res.version = YVersion::from_bytes(b.get(4..28).unwrap())?;
-        get_tx_res.method = BigEndian::read_u32(b.get(28..32).unwrap()).into();
-        get_tx_res.id = BigEndian::read_u32(b.get(32..36).unwrap());
-        get_tx_res.time = YTime::from_bytes(b.get(36..44).unwrap())?;
-        get_tx_res.tx = YTransaction::from_bytes(b.get(44..).unwrap())?;
+        let method = BigEndian::read_u32(b.get(0..4).unwrap()).into();
+        let tx = YTransaction::from_bytes(b.get(4..).unwrap())?;
+        let get_tx_res = YGetTxRes {
+            method: method,
+            tx: tx,
+        };
         get_tx_res.check()?;
         Ok(get_tx_res)
     }
@@ -266,29 +210,19 @@ impl YGetTxRes {
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YConfirmTxReq {
-    pub version: YVersion,
     pub method: YMethod,
-    pub id: u32,
-    pub time: YTime,
     pub tx_id: YDigest64,
 }
 
 impl YConfirmTxReq {
     pub fn new(tx_id: YDigest64) -> YConfirmTxReq {
         YConfirmTxReq {
-            version: default_version(),
             method: YMethod::ConfirmTx,
-            id: YRandom::u32(),
-            time: YTime::now(),
             tx_id: tx_id,
         }
     }
 
     pub fn check(&self) -> YResult<()> {
-        if self.version != default_version() {
-            let verstring = self.version.to_string();
-            return Err(YErrorKind::InvalidVersion(verstring).into());
-        }
         if self.method != YMethod::ConfirmTx {
             return Err(YErrorKind::Other("Invalid method".to_string()).into());
         }
@@ -298,58 +232,45 @@ impl YConfirmTxReq {
     pub fn to_bytes(&self) -> YResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
-        buf.put(&self.version.to_bytes()?[..]);
         buf.put(self.method.to_bytes());
-        buf.put_u32::<BigEndian>(self.id as u32);
-        buf.put(&self.time.to_bytes()[..]);
         buf.put(self.tx_id.to_bytes());
         Ok(buf.to_vec())
     }
 
     pub fn from_bytes(buf: &[u8]) -> YResult<YConfirmTxReq> {
-        if buf.len() != 108 {
+        if buf.len() != 68 {
             return Err(YErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let mut ls_txs_req = YConfirmTxReq::default();
-        ls_txs_req.version = YVersion::from_bytes(b.get(4..28).unwrap())?;
-        ls_txs_req.method = BigEndian::read_u32(b.get(28..32).unwrap()).into();
-        ls_txs_req.id = BigEndian::read_u32(b.get(32..36).unwrap());
-        ls_txs_req.time = YTime::from_bytes(b.get(36..44).unwrap())?;
-        ls_txs_req.tx_id = YDigest64::from_bytes(b.get(44..).unwrap())?;
-        ls_txs_req.check()?;
-        Ok(ls_txs_req)
+        let method = BigEndian::read_u32(b.get(0..4).unwrap()).into();
+        let tx_id = YDigest64::from_bytes(b.get(4..).unwrap())?;
+        let conf_tx_req = YConfirmTxReq {
+            method: method,
+            tx_id: tx_id,
+        };
+        conf_tx_req.check()?;
+        Ok(conf_tx_req)
     }
 }
 
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct YConfirmTxRes {
-    pub version: YVersion,
     pub method: YMethod,
-    pub id: u32,
-    pub time: YTime,
     pub ack: bool,
     pub cb: YCoinbase,
 }
 
 impl YConfirmTxRes {
-    pub fn new(id: u32, ack: bool, cb: &YCoinbase) -> YConfirmTxRes {
+    pub fn new(ack: bool, cb: &YCoinbase) -> YConfirmTxRes {
         YConfirmTxRes {
-            version: default_version(),
             method: YMethod::ConfirmTx,
-            id: id,
-            time: YTime::now(),
             ack: ack,
             cb: cb.clone(),
         }
     }
 
     pub fn check(&self) -> YResult<()> {
-        if self.version != default_version() {
-            let verstring = self.version.to_string();
-            return Err(YErrorKind::InvalidVersion(verstring).into());
-        }
         if self.method != YMethod::ConfirmTx {
             return Err(YErrorKind::Other("Invalid method".to_string()).into());
         }
@@ -359,34 +280,33 @@ impl YConfirmTxRes {
     pub fn to_bytes(&self) -> YResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
-        buf.put(&self.version.to_bytes()?[..]);
         buf.put(self.method.to_bytes());
-        buf.put_u32::<BigEndian>(self.id as u32);
-        buf.put(&self.time.to_bytes()[..]);
         buf.put_u32::<BigEndian>(self.ack as u32);
         buf.put(self.cb.to_bytes()?);
         Ok(buf.to_vec())
     }
 
     pub fn from_bytes(buf: &[u8]) -> YResult<YConfirmTxRes> {
-        if buf.len() < 48 {
+        if buf.len() < 112 {
             return Err(YErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let mut confirm_cb_res = YConfirmTxRes::default();
-        confirm_cb_res.version = YVersion::from_bytes(b.get(4..28).unwrap())?;
-        confirm_cb_res.method = BigEndian::read_u32(b.get(28..32).unwrap()).into();
-        confirm_cb_res.id = BigEndian::read_u32(b.get(32..36).unwrap());
-        confirm_cb_res.time = YTime::from_bytes(b.get(36..44).unwrap())?;
-        let ack = BigEndian::read_u32(b.get(44..48).unwrap());
-        match ack {
-            0 => { confirm_cb_res.ack = false; },
-            1 => { confirm_cb_res.ack = true; },
+        let method = BigEndian::read_u32(b.get(0..4).unwrap()).into();
+        let ack_n = BigEndian::read_u32(b.get(4..8).unwrap());
+        let mut ack = false;
+        match ack_n {
+            0 => {},
+            1 => { ack = true; },
             _ => { return Err(YErrorKind::Other("Invalid ack".to_string()).into()); }
         }
-        confirm_cb_res.cb = YCoinbase::from_bytes(b.get(48..).unwrap())?;
-        confirm_cb_res.check()?;
-        Ok(confirm_cb_res)
+        let cb = YCoinbase::from_bytes(b.get(8..).unwrap())?;
+        let confirm_tx_res = YConfirmTxRes {
+            method: method,
+            ack: ack,
+            cb: cb,
+        };
+        confirm_tx_res.check()?;
+        Ok(confirm_tx_res)
     }
 }

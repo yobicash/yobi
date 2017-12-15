@@ -5,11 +5,11 @@ use models::peer::*;
 use network::codec::peer::*;
 use std::io;
 
-pub struct YPeerProto;
+pub struct YListPeersProto;
 
 impl<T: AsyncRead + AsyncWrite + 'static> ServerProto<T> for YPeerProto {
-    type Request = YPeer;
-    type Response = YPeer;
+    type Request = YListPeersReq;
+    type Response = YListPeersRes;
 
     type Transport = Framed<T, YPeerCodec>;
     type BindTransport = Result<Self::Transport, io::Error>;

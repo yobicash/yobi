@@ -1,6 +1,5 @@
 use libyobicash::errors::*;
 use unqlite::{UnQLite, KV, Cursor, Direction};
-use std::marker::Sized;
 use std::io::Error as IOError;
 use std::io::ErrorKind as IOErrorKind;
 use std::fs::remove_file;
