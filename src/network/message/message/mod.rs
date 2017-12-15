@@ -1,13 +1,15 @@
-use libyobicash::errors::*;
+use libyobicash::errors::YErrorKind as LibErrorKind;
+use libyobicash::errors::YError as LibError;
 use libyobicash::utils::random::*;
 use libyobicash::utils::time::*;
 use libyobicash::utils::version::*;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::hash::sha::YSHA512;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
+use std::convert::From;
 use network::method::*;
 use version::*;
-use std::convert::From;
+use errors::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum YMessageKind {
@@ -31,14 +33,14 @@ impl YMessageKind {
         }
     }
 
-    pub fn from_bytes(b: &[u8]) -> YResult<YMessageKind> {
+    pub fn from_bytes(b: &[u8]) -> YHResult<YMessageKind> {
         if b.len() != 4 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         match BigEndian::read_u32(b) {
             0 => { Ok(YMessageKind::Request) },
             1 => { Ok(YMessageKind::Response) },
-            _ => { Err(YErrorKind::Other("Invalid kind".to_string()).into()) },
+            _ => { Err(YHErrorKind::InvalidMessageKind.into()) },
         }
     }
 }
@@ -75,14 +77,14 @@ impl YMessageStatus {
         }
     }
 
-    pub fn from_bytes(b: &[u8]) -> YResult<YMessageStatus> {
+    pub fn from_bytes(b: &[u8]) -> YHResult<YMessageStatus> {
         if b.len() != 4 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         match BigEndian::read_u32(b) {
             0 => { Ok(YMessageStatus::Failure) },
             1 => { Ok(YMessageStatus::Success) },
-            _ => { Err(YErrorKind::Other("Invalid status".to_string()).into()) },
+            _ => { Err(YHErrorKind::InvalidMessageStatus.into()) },
         }
     }
 }
@@ -110,7 +112,7 @@ pub struct YMessage {
 }
 
 impl YMessage {
-    pub fn new(method: YMethod, kind: YMessageKind, status: YMessageStatus, payload: &Vec<u8>) -> YResult<YMessage> {
+    pub fn new(method: YMethod, kind: YMessageKind, status: YMessageStatus, payload: &Vec<u8>) -> YHResult<YMessage> {
         let mut msg = YMessage {
             id: YDigest64::default(),
             version: default_version(),
@@ -125,20 +127,20 @@ impl YMessage {
         Ok(msg)
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.id != self.calc_id()? {
-            return Err(YErrorKind::InvalidChecksum.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidChecksum).into());
         }
         if self.version.major() > default_version().major() {
-            return Err(YErrorKind::InvalidVersion(self.version.to_string()).into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidVersion(self.version.to_string())).into());
         }
         if self.time > YTime::now() {
-            return Err(YErrorKind::InvalidTime.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidTime).into());
         }
         Ok(())
     }
 
-    pub fn calc_id(&self) -> YResult<YDigest64> {
+    pub fn calc_id(&self) -> YHResult<YDigest64> {
         let mut buf = BytesMut::new();
         buf.put(&self.version.to_bytes()?[..]);
         buf.put(&self.time.to_bytes()[..]);
@@ -150,7 +152,7 @@ impl YMessage {
         Ok(YSHA512::hash(&buf.to_vec()))
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         let mut buf = BytesMut::new();
         buf.put(self.id.to_bytes());
         buf.put(&self.version.to_bytes()?[..]);
@@ -163,9 +165,9 @@ impl YMessage {
         Ok(buf.to_vec())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YMessage> { 
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YMessage> { 
         if buf.len() < 100 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

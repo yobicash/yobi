@@ -1,9 +1,9 @@
-use libyobicash::errors::*;
 use libyobicash::utils::random::YRandom;
 use libyobicash::utils::time::YTime;
 use libyobicash::crypto::hash::sha::YSHA512;
 use libyobicash::transaction::YTransaction;
 use libyobicash::coinbase::YCoinbase;
+use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct YPeer {
@@ -29,19 +29,19 @@ impl YPeer {
         }
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         unreachable!()
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YPeer> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YPeer> {
         unreachable!()
     }
 
-    pub fn to_hex(&self) -> YResult<String> {
+    pub fn to_hex(&self) -> YHResult<String> {
         unreachable!()
     }
 
-    pub fn from_hex(s: &str) -> YResult<YPeer> {
+    pub fn from_hex(s: &str) -> YHResult<YPeer> {
         unreachable!()
     }
 }

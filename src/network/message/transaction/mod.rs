@@ -1,9 +1,11 @@
+use libyobicash::errors::YErrorKind as LibErrorKind;
+use libyobicash::errors::YError as LibError;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::transaction::YTransaction;
 use libyobicash::coinbase::YCoinbase;
-use libyobicash::errors::*;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use network::method::YMethod;
+use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YListTxAncestorsReq {
@@ -19,14 +21,14 @@ impl YListTxAncestorsReq {
         }
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.method != YMethod::ListTxAncestors {
-            return Err(YErrorKind::Other("Invalid method".to_string()).into());
+            return Err(YHErrorKind::InvalidMessageMethod.into());
         }
         Ok(())
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
         buf.put(self.method.to_bytes());
@@ -34,9 +36,9 @@ impl YListTxAncestorsReq {
         Ok(buf.to_vec())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YListTxAncestorsReq> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YListTxAncestorsReq> {
         if buf.len() != 68 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -67,17 +69,17 @@ impl YListTxAncestorsRes {
         }
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.method != YMethod::ListTxAncestors {
-            return Err(YErrorKind::Other("Invalid method".to_string()).into());
+            return Err(YHErrorKind::InvalidMessageMethod.into());
         }
         if self.txs.len() != self.count as usize {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         Ok(())
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
         buf.put(self.method.to_bytes());
@@ -91,9 +93,9 @@ impl YListTxAncestorsRes {
         Ok(buf.to_vec())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YListTxAncestorsRes> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YListTxAncestorsRes> {
         if buf.len() < 48 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -130,14 +132,14 @@ impl YGetTxReq {
         }
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.method != YMethod::GetTx {
-            return Err(YErrorKind::Other("Invalid method".to_string()).into());
+            return Err(YHErrorKind::InvalidMessageMethod.into());
         }
         Ok(())
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
         buf.put(self.method.to_bytes());
@@ -145,9 +147,9 @@ impl YGetTxReq {
         Ok(buf.to_vec())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YGetTxReq> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YGetTxReq> {
         if buf.len() != 68 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -176,14 +178,14 @@ impl YGetTxRes {
         }
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.method != YMethod::GetTx {
-            return Err(YErrorKind::Other("Invalid method".to_string()).into());
+            return Err(YHErrorKind::InvalidMessageMethod.into());
         }
         Ok(())
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
         buf.put(self.method.to_bytes());
@@ -191,9 +193,9 @@ impl YGetTxRes {
         Ok(buf.to_vec())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YGetTxRes> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YGetTxRes> {
         if buf.len() < 108 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -222,14 +224,14 @@ impl YConfirmTxReq {
         }
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.method != YMethod::ConfirmTx {
-            return Err(YErrorKind::Other("Invalid method".to_string()).into());
+            return Err(YHErrorKind::InvalidMessageMethod.into());
         }
         Ok(())
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
         buf.put(self.method.to_bytes());
@@ -237,9 +239,9 @@ impl YConfirmTxReq {
         Ok(buf.to_vec())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YConfirmTxReq> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YConfirmTxReq> {
         if buf.len() != 68 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -270,14 +272,14 @@ impl YConfirmTxRes {
         }
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.method != YMethod::ConfirmTx {
-            return Err(YErrorKind::Other("Invalid method".to_string()).into());
+            return Err(YHErrorKind::InvalidMessageMethod.into());
         }
         Ok(())
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
         buf.put(self.method.to_bytes());
@@ -286,9 +288,9 @@ impl YConfirmTxRes {
         Ok(buf.to_vec())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YConfirmTxRes> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YConfirmTxRes> {
         if buf.len() < 112 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -298,7 +300,7 @@ impl YConfirmTxRes {
         match ack_n {
             0 => {},
             1 => { ack = true; },
-            _ => { return Err(YErrorKind::Other("Invalid ack".to_string()).into()); }
+            _ => { return Err(YHErrorKind::Other("Invalid ack".to_string()).into()); }
         }
         let cb = YCoinbase::from_bytes(b.get(8..).unwrap())?;
         let confirm_tx_res = YConfirmTxRes {

@@ -1,6 +1,8 @@
-use libyobicash::errors::*;
+use libyobicash::errors::YErrorKind as LibErrorKind;
+use libyobicash::errors::YError as LibError;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use std::convert::From;
+use errors::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum YMethod {
@@ -44,9 +46,9 @@ impl YMethod {
         buf.to_vec()
     }
 
-    pub fn from_bytes(b: &[u8]) -> YResult<YMethod> {
+    pub fn from_bytes(b: &[u8]) -> YHResult<YMethod> {
         if b.len() != 4 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         Ok(BigEndian::read_u32(b).into())
     }

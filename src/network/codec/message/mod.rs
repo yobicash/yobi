@@ -1,4 +1,3 @@
-use libyobicash::errors::*;
 use bytes::BytesMut;
 use tokio_io::codec::{Encoder, Decoder};
 use network::message::message::*;

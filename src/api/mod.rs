@@ -1,4 +1,3 @@
-use libyobicash::errors::*;
 use libyobicash::utils::random::YRandom;
 use libyobicash::utils::time::YTime;
 use libyobicash::utils::version::YVersion;
@@ -14,14 +13,15 @@ use models::info::*;
 use models::peer::*;
 use models::wallet::*;
 use models::output::*;
+use errors::*;
 
 // NB: for errors: std::io::Error
-//     for YResult would wrap std::io::Error in these cases
+//     for YHResult would wrap std::io::Error in these cases
 // NB: all the list methods return only the primary keys
 pub struct YAPI;
 
 impl YAPI {
-    pub fn info() -> YResult<YInfo> {
+    pub fn info() -> YHResult<YInfo> {
         Ok(YInfo {
             store_size: 100_000,
             online: true,
@@ -33,7 +33,7 @@ impl YAPI {
         })
     }
 
-    pub fn create_peer(ip: [u8; 4], port: u16) -> YResult<YPeer> {
+    pub fn create_peer(ip: [u8; 4], port: u16) -> YHResult<YPeer> {
         let peer = YPeer {
             ip: ip,
             port: port,
@@ -42,11 +42,11 @@ impl YAPI {
         Ok(peer)
     }
 
-    pub fn list_peers() -> YResult<Vec<[u8; 4]>> {
+    pub fn list_peers() -> YHResult<Vec<[u8; 4]>> {
         Ok(vec![[1, 2, 3, 4]])
     }
 
-    pub fn create_wallet(name: String) -> YResult<YWallet> {
+    pub fn create_wallet(name: String) -> YHResult<YWallet> {
         let wallet = YWallet {
             name: name,
             balance: YAmount::from_u64(1_000)?,
@@ -56,11 +56,11 @@ impl YAPI {
         Ok(wallet)
     }
 
-    pub fn list_wallets() -> YResult<Vec<String>> {
+    pub fn list_wallets() -> YHResult<Vec<String>> {
         Ok(vec!["mocked_wallet".to_string()])
     }
 
-    pub fn get_wallet(name: String) -> YResult<YWallet> {
+    pub fn get_wallet(name: String) -> YHResult<YWallet> {
         let stxo = YCoin {
             date: YTime::now(),
             sk: YSecretKey::random(),
@@ -90,7 +90,7 @@ impl YAPI {
                      utxos: Vec<YUTXO>,
                      amount_outs: Vec<YAmountOutput>,
                      data_outs: Vec<YDataOutput>, 
-                     activation: YTime) -> YResult<YTransaction> {
+                     activation: YTime) -> YHResult<YTransaction> {
         let tx = YTransaction {
             id: YDigest64::from_bytes(YRandom::bytes(64).as_slice())?,
             version: YVersion::default(),
@@ -106,11 +106,11 @@ impl YAPI {
         Ok(tx)
     }
 
-    pub fn list_txs(wallet: String) -> YResult<Vec<YDigest64>> {
+    pub fn list_txs(wallet: String) -> YHResult<Vec<YDigest64>> {
         Ok(vec![YDigest64::from_bytes(YRandom::bytes(64).as_slice())?])
     }
 
-    pub fn get_tx(wallet: String, id: YDigest64) -> YResult<YTransaction> {
+    pub fn get_tx(wallet: String, id: YDigest64) -> YHResult<YTransaction> {
         let tx = YTransaction {
             id: id,
             version: YVersion::default(),
@@ -126,11 +126,11 @@ impl YAPI {
         Ok(tx)
     }
 
-    pub fn list_data(wallet: String) -> YResult<Vec<YDigest64>> {
+    pub fn list_data(wallet: String) -> YHResult<Vec<YDigest64>> {
         Ok(vec![YDigest64::from_bytes(YRandom::bytes(64).as_slice())?])
     }
 
-    pub fn get_data(wallet: String, id: YDigest64) -> YResult<YData> {
+    pub fn get_data(wallet: String, id: YDigest64) -> YHResult<YData> {
         Ok(YData::default()) 
     }
 }

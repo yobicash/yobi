@@ -1,8 +1,8 @@
-use libyobicash::errors::*;
 use libyobicash::utils::time::YTime;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::elliptic::keys::*;
 use libyobicash::amount::YAmount;
+use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct YCoin {

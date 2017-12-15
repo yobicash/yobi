@@ -1,8 +1,8 @@
-use libyobicash::errors::*;
 use libyobicash::utils::random::YRandom;
 use libyobicash::crypto::hash::sha::YSHA512;
 use libyobicash::transaction::YTransaction;
 use libyobicash::coinbase::YCoinbase;
+use errors::*;
 
 use models::peer::YPeer;
 
@@ -35,11 +35,11 @@ impl YConfig {
         }
     }
 
-    pub fn save(&self, path: Option<String>) -> YResult<()> {
+    pub fn save(&self, path: Option<String>) -> YHResult<()> {
         unreachable!()
     }
 
-    pub fn read(path: Option<String>) -> YResult<YConfig> {
+    pub fn read(path: Option<String>) -> YHResult<YConfig> {
         unreachable!()
     }
 }

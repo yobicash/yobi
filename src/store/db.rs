@@ -1,13 +1,13 @@
-use libyobicash::errors::*;
 use unqlite::{UnQLite, KV, Cursor, Direction};
 use std::io::Error as IOError;
 use std::io::ErrorKind as IOErrorKind;
 use std::fs::remove_file;
 use std::error::Error;
+use errors::*;
 use store::common::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub enum UnQLiteMode {
+pub enum DbMode {
     Memory {
         path: String,
         read_only: bool,
@@ -20,34 +20,34 @@ pub enum UnQLiteMode {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct UnQLiteConfig {
-    pub mode: UnQLiteMode,
+pub struct DbConfig {
+    pub mode: DbMode,
 }
 
-pub struct UnQLiteStore {
-    pub config: UnQLiteConfig,
+pub struct DbStore {
+    pub config: DbConfig,
     pub handle: UnQLite,
 }
 
-impl YStorage for UnQLiteStore {
-    type Config = UnQLiteConfig;
+impl YStorage for DbStore {
+    type Config = DbConfig;
         
-    fn create(config: Self::Config) -> YResult<Self> {
+    fn create(config: Self::Config) -> YHResult<Self> {
         match config.mode.clone() {
-            UnQLiteMode::Memory { .. } => {
-                Ok(UnQLiteStore {
+            DbMode::Memory { .. } => {
+                Ok(DbStore {
                     config: config,
                     handle: UnQLite::create_in_memory(),
                 })
             },
-            UnQLiteMode::Temporary => {
-                Ok(UnQLiteStore {
+            DbMode::Temporary => {
+                Ok(DbStore {
                     config: config,
                     handle: UnQLite::create_temp(),
                 })
             },
-            UnQLiteMode::Persistent{ path, .. } => {
-                Ok(UnQLiteStore {
+            DbMode::Persistent{ path, .. } => {
+                Ok(DbStore {
                     config: config,
                     handle: UnQLite::create(path.as_str()),
                 })
@@ -55,39 +55,39 @@ impl YStorage for UnQLiteStore {
         }
     }
 
-    fn open(config: Self::Config) -> YResult<Self> {
+    fn open(config: Self::Config) -> YHResult<Self> {
         match config.mode.clone() {
-            UnQLiteMode::Memory { path, read_only } => {
+            DbMode::Memory { path, read_only } => {
                 if read_only {
                     let handle = UnQLite::open_mmap(path.as_str());
-                    Ok(UnQLiteStore {
+                    Ok(DbStore {
                         config: config,
                         handle: handle,
                     })
                 } else {
                     let handle = UnQLite::create_in_memory();
-                    Ok(UnQLiteStore {
+                    Ok(DbStore {
                         config: config,
                         handle: handle,
                     })
                 }
             },
-            UnQLiteMode::Temporary => {
-                Ok(UnQLiteStore {
+            DbMode::Temporary => {
+                Ok(DbStore {
                     config: config,
                     handle: UnQLite::create_temp(),
                 })
             },
-            UnQLiteMode::Persistent{ path, read_only } => {
+            DbMode::Persistent{ path, read_only } => {
                 if read_only {
                     let handle = UnQLite::open_readonly(path.as_str());
-                    Ok(UnQLiteStore {
+                    Ok(DbStore {
                         config: config,
                         handle: handle,
                     })
                 } else {
                     let handle = UnQLite::create(path.as_str());
-                    Ok(UnQLiteStore {
+                    Ok(DbStore {
                         config: config,
                         handle: handle,
                     })
@@ -96,64 +96,64 @@ impl YStorage for UnQLiteStore {
         }
     }
 
-    fn close(&mut self) -> YResult<()> {
+    fn close(&mut self) -> YHResult<()> {
         Ok(())
     }
 
-    fn reset(self) -> YResult<Self> {
+    fn reset(self) -> YHResult<Self> {
         let config = self.config.clone();
         self.destroy()?;
         Self::create(config)
     }
 
-    fn destroy(self) -> YResult<()> {
+    fn destroy(self) -> YHResult<()> {
         match self.config.mode {
-            UnQLiteMode::Memory { .. } => {
+            DbMode::Memory { .. } => {
                 Ok(())
             },
-            UnQLiteMode::Temporary => {
+            DbMode::Temporary => {
                 Ok(())
             },
-            UnQLiteMode::Persistent{ path, read_only } => {
+            DbMode::Persistent{ path, read_only } => {
                 if read_only {
                     let err = IOError::new(IOErrorKind::PermissionDenied, "read only store");
-                    Err(YErrorKind::IO(err).into())
+                    Err(YHErrorKind::IO(err).into())
                 } else {
                     remove_file(path.as_str())
-                        .map_err(|err| YErrorKind::IO(err).into())
+                        .map_err(|err| YHErrorKind::IO(err).into())
                 }
             },
         }
     }
 
-    fn put(&mut self, buck: &YStoreBuck, key: &YStoreKey, value: &YStoreValue) -> YResult<()> {
+    fn put(&mut self, buck: &YStoreBuck, key: &YStoreKey, value: &YStoreValue) -> YHResult<()> {
         let mut index = Vec::new();
         index.extend(buck.iter().cloned());
         index.extend(key.iter().cloned());
         self.handle.kv_store(index.as_slice(), value.as_slice())
-            .map_err(|err| YErrorKind::IO(IOError::new(IOErrorKind::Other, err.description())).into())
+            .map_err(|err| YHErrorKind::IO(IOError::new(IOErrorKind::Other, err.description())).into())
     }
 
-    fn lookup(&self, buck: &YStoreBuck, key: &YStoreKey) -> YResult<bool> {
+    fn lookup(&self, buck: &YStoreBuck, key: &YStoreKey) -> YHResult<bool> {
         let mut index = Vec::new();
         index.extend(buck.iter().cloned());
         index.extend(key.iter().cloned());
         Ok(self.handle.kv_contains(index.as_slice()))
     }
 
-    fn get(&self, buck: &YStoreBuck, key: &YStoreKey) -> YResult<YStoreItem> {
+    fn get(&self, buck: &YStoreBuck, key: &YStoreKey) -> YHResult<YStoreItem> {
         let mut index = Vec::new();
         index.extend(buck.iter().cloned());
         index.extend(key.iter().cloned());
         self.handle.kv_fetch(index.as_slice())
             .map(|value| YStoreItem { key: key.clone(), value: value })
-            .map_err(|err| YErrorKind::IO(IOError::new(IOErrorKind::Other, err.description())).into())
+            .map_err(|err| YHErrorKind::IO(IOError::new(IOErrorKind::Other, err.description())).into())
     }
 
-    fn count(&self, buck: &YStoreBuck) -> YResult<u64> {
+    fn count(&self, buck: &YStoreBuck) -> YHResult<u64> {
         let mut entry = self.handle.seek(buck.as_slice(), Direction::Ge);
         if entry.is_none() {
-            return Err(YErrorKind::IO(IOError::new(IOErrorKind::NotFound, "buck not found")).into());
+            return Err(YHErrorKind::IO(IOError::new(IOErrorKind::NotFound, "buck not found")).into());
         } else {
             let mut count = 0;
             loop {
@@ -167,10 +167,10 @@ impl YStorage for UnQLiteStore {
         }
     }
 
-    fn list(&self, buck: &YStoreBuck) -> YResult<Vec<YStoreKey>> {
+    fn list(&self, buck: &YStoreBuck) -> YHResult<Vec<YStoreKey>> {
         let mut entry = self.handle.seek(buck.as_slice(), Direction::Ge);
         if entry.is_none() {
-            return Err(YErrorKind::IO(IOError::new(IOErrorKind::NotFound, "buck not found")).into());
+            return Err(YHErrorKind::IO(IOError::new(IOErrorKind::NotFound, "buck not found")).into());
         } else {
             let mut ls = Vec::new();
             loop {
@@ -185,11 +185,11 @@ impl YStorage for UnQLiteStore {
         }
     }
 
-    fn delete(&mut self, buck: &YStoreBuck, key: &YStoreKey) -> YResult<()> {
+    fn delete(&mut self, buck: &YStoreBuck, key: &YStoreKey) -> YHResult<()> {
         let mut index = Vec::new();
         index.extend(buck.iter().cloned());
         index.extend(key.iter().cloned());
         self.handle.kv_delete(index.as_slice())
-            .map_err(|err| YErrorKind::IO(IOError::new(IOErrorKind::Other, err.description())).into())
+            .map_err(|err| YHErrorKind::Db(err).into())
     }
 }

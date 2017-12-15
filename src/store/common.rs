@@ -1,4 +1,4 @@
-use libyobicash::errors::*;
+use errors::*;
 
 pub type YStoreBuck = Vec<u8>;
 
@@ -17,25 +17,25 @@ pub trait YStorage
 {
     type Config;
 
-    fn create(config: Self::Config) -> YResult<Self>;
+    fn create(config: Self::Config) -> YHResult<Self>;
 
-    fn open(config: Self::Config) -> YResult<Self>;
+    fn open(config: Self::Config) -> YHResult<Self>;
 
-    fn close(&mut self) -> YResult<()>;
+    fn close(&mut self) -> YHResult<()>;
 
-    fn reset(self) -> YResult<Self>;
+    fn reset(self) -> YHResult<Self>;
 
-    fn destroy(self) -> YResult<()>;
+    fn destroy(self) -> YHResult<()>;
 
-    fn put(&mut self, buck: &YStoreBuck, key: &YStoreKey, value: &YStoreValue) -> YResult<()>;
+    fn put(&mut self, buck: &YStoreBuck, key: &YStoreKey, value: &YStoreValue) -> YHResult<()>;
 
-    fn lookup(&self, buck: &YStoreBuck, key: &YStoreKey) -> YResult<bool>;
+    fn lookup(&self, buck: &YStoreBuck, key: &YStoreKey) -> YHResult<bool>;
 
-    fn get(&self, buck: &YStoreBuck, key: &YStoreKey) -> YResult<YStoreItem>;
+    fn get(&self, buck: &YStoreBuck, key: &YStoreKey) -> YHResult<YStoreItem>;
 
-    fn count(&self, buck: &YStoreBuck) -> YResult<u64>;
+    fn count(&self, buck: &YStoreBuck) -> YHResult<u64>;
 
-    fn list(&self, buck: &YStoreBuck) -> YResult<Vec<YStoreKey>>;
+    fn list(&self, buck: &YStoreBuck) -> YHResult<Vec<YStoreKey>>;
 
-    fn delete(&mut self, buck: &YStoreBuck, key: &YStoreKey) -> YResult<()>;
+    fn delete(&mut self, buck: &YStoreBuck, key: &YStoreKey) -> YHResult<()>;
 }

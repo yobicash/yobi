@@ -1,8 +1,10 @@
+use libyobicash::errors::YErrorKind as LibErrorKind;
+use libyobicash::errors::YError as LibError;
 use libyobicash::crypto::elliptic::keys::YPublicKey;
 use libyobicash::amount::YAmount;
-use libyobicash::errors::*;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use network::method::YMethod;
+use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct YPingReq {
@@ -16,21 +18,21 @@ impl YPingReq {
         }
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.method != YMethod::Ping {
-            return Err(YErrorKind::Other("Invalid method".to_string()).into());
+            return Err(YHErrorKind::InvalidMessageMethod.into());
         }
         Ok(())
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         self.check()?;
         Ok(self.method.to_bytes())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YPingReq> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YPingReq> {
         if buf.len() != 4 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let ping_req = YPingReq {
             method: BigEndian::read_u32(buf).into(),
@@ -48,7 +50,7 @@ pub struct YPingRes {
 }
 
 impl YPingRes {
-    pub fn new(pk: YPublicKey, price: &YAmount) -> YResult<YPingRes> {
+    pub fn new(pk: YPublicKey, price: &YAmount) -> YHResult<YPingRes> {
         Ok(YPingRes {
             method: YMethod::Ping,
             public_key: pk,
@@ -56,14 +58,14 @@ impl YPingRes {
         })
     }
 
-    pub fn check(&self) -> YResult<()> {
+    pub fn check(&self) -> YHResult<()> {
         if self.method != YMethod::Ping {
-            return Err(YErrorKind::Other("Invalid method".to_string()).into());
+            return Err(YHErrorKind::InvalidMessageMethod.into());
         }
         Ok(())
     }
 
-    pub fn to_bytes(&self) -> YResult<Vec<u8>> {
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         self.check()?;
         let mut buf = BytesMut::new();
         buf.put(self.method.to_bytes());
@@ -72,9 +74,9 @@ impl YPingRes {
         Ok(buf.to_vec())
     }
 
-    pub fn from_bytes(buf: &[u8]) -> YResult<YPingRes> {
+    pub fn from_bytes(buf: &[u8]) -> YHResult<YPingRes> {
         if buf.len() < 69 {
-            return Err(YErrorKind::InvalidLength.into());
+            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

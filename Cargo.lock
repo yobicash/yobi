@@ -579,7 +579,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "unqlite"
 version = "1.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/yobicash/unqlite.rs#197d9ca687782e946621f34d9550a4d616bbed50"
 dependencies = [
  "libc 0.2.34 (registry+https://github.com/rust-lang/crates.io-index)",
  "unqlite-sys 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -618,6 +618,7 @@ version = "0.1.0"
 dependencies = [
  "bytes 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "error-chain 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-await 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libyobicash 0.9.0 (git+https://github.com/yobicash/libyobicash)",
@@ -626,7 +627,7 @@ dependencies = [
  "tokio-io 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-proto 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-service 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "unqlite 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unqlite 1.3.1 (git+https://github.com/yobicash/unqlite.rs)",
 ]
 
 [metadata]
@@ -700,7 +701,7 @@ dependencies = [
 "checksum tokio-service 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "24da22d077e0f15f55162bdbdc661228c1581892f52074fb242678d015b45162"
 "checksum typenum 1.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "13a99dc6780ef33c78780b826cf9d2a78840b72cae9474de4bcaf9051e60ebbd"
 "checksum unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc72304796d0818e357ead4e000d19c9c174ab23dc11093ac919054d20a6a7fc"
-"checksum unqlite 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "0c81cfceeba73b80c9c36ccb368ef5c0252f6c324d5fba68a20a7988fda93ba0"
+"checksum unqlite 1.3.1 (git+https://github.com/yobicash/unqlite.rs)" = "<none>"
 "checksum unqlite-sys 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5534a4b9fbfb961f95f5272ab395a4f512b793525bcdb474a1dfecba9e2e7b07"
 "checksum winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "167dc9d6949a9b857f3451275e911c3f44255842c1f7a76f33c55103a909087a"
 "checksum winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"
