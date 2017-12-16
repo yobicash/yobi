@@ -1,6 +1,6 @@
 #[derive(StructOpt, Debug)]
 #[structopt(name="yobicashd", about="The Yobicash node server", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
-pub enum YobicashdOpt {
+pub enum YobicashNodeOpt {
     #[structopt(name="start", about="Start the Yobicash node server", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Start {
         #[structopt(short="H", long="host", help="Set a custom host")]

@@ -27,7 +27,7 @@ libyobicash = { version = "^0.9", git = "https://github.com/yobicash/libyobicash
 
 [[bin]]
 name = "yobicashd"
-path = "src/main.rs"
+path = "src/yobicashd.rs"
 
 [[bin]]
 name = "yobicash-cli"
