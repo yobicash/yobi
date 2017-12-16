@@ -4,11 +4,17 @@ use store::*;
 use models::*;
 use config::*;
 
-pub struct YAPI {
-    pub config: YConfig,
+pub struct YAPIStore<S: YStorage> {
+    pub memory: Option<S>,
+    pub persistent: Option<S>,
 }
 
-impl YAPI {
+pub struct YAPI<S: YStorage> {
+    pub config: YConfig,
+    pub store: YAPIStore<S>,
+}
+
+impl<S: YStorage> YAPI<S> {
     pub fn open_store() {
         unreachable!()
     }
