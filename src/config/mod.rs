@@ -9,6 +9,7 @@ use models::peer::YPeer;
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct YConfig {
     pub password: String,
+    pub db_path: String,
     pub seed: Vec<YPeer>,
     pub port: u16,
 }
@@ -20,6 +21,7 @@ impl Default for YConfig {
         let port = 2112;
         YConfig {
             password: password,
+            db_path: "TODO".to_string(), //TODO
             seed: seed,
             port: port,
         }
@@ -27,12 +29,16 @@ impl Default for YConfig {
 }
 
 impl YConfig {
-    pub fn new(pswd: &str, seed: &Vec<YPeer>, port: u16) -> YConfig {
-        YConfig {
+    pub fn new(pswd: &str, db_path: &str, seed: &Vec<YPeer>, port: u16) -> YHResult<YConfig> {
+        // TODO: check psdw complexity
+        // TODO: check db_path
+        // TODO: check seed peers
+        Ok(YConfig {
             password: String::from(pswd),
+            db_path: String::from(db_path),
             seed: seed.clone(),
             port: port,
-        }
+        })
     }
 
     pub fn save(&self, path: Option<String>) -> YHResult<()> {

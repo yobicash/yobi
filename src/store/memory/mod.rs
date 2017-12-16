@@ -6,26 +6,26 @@ use errors::*;
 use store::common::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct DbMode {
+pub struct MemoryMode {
     pub path: String,
     pub read_only: bool,
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct DbConfig {
-    pub mode: DbMode,
+pub struct MemoryConfig {
+    pub mode: MemoryMode,
 }
 
-pub struct DbStore {
-    pub config: DbConfig,
+pub struct MemoryStore {
+    pub config: MemoryConfig,
     pub handle: UnQLite,
 }
 
-impl YStorage for DbStore {
-    type Config = DbConfig;
+impl YStorage for MemoryStore {
+    type Config = MemoryConfig;
         
     fn create(config: Self::Config) -> YHResult<Self> {
-        Ok(DbStore {
+        Ok(MemoryStore {
             config: config,
             handle: UnQLite::create_in_memory(),
         })
@@ -34,13 +34,13 @@ impl YStorage for DbStore {
     fn open(config: Self::Config) -> YHResult<Self> {
         if config.mode.read_only {
             let handle = UnQLite::open_mmap(config.mode.path.as_str());
-            Ok(DbStore {
+            Ok(MemoryStore {
                 config: config,
                 handle: handle,
             })
         } else {
             let handle = UnQLite::create_in_memory();
-            Ok(DbStore {
+            Ok(MemoryStore {
                 config: config,
                 handle: handle,
             })
@@ -166,6 +166,6 @@ impl YStorage for DbStore {
         index.extend(buck.iter().cloned());
         index.extend(key.iter().cloned());
         self.handle.kv_delete(index.as_slice())
-            .map_err(|err| YHErrorKind::Db(err).into())
+            .map_err(|err| YHErrorKind::Store(err).into())
     }
 }

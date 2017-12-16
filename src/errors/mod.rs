@@ -14,7 +14,7 @@ error_chain! {
 
   foreign_links {
     IO(IOError);
-    Db(UnQLiteError);
+    Store(UnQLiteError);
   }
 
   errors {

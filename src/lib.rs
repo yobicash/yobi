@@ -13,11 +13,11 @@ extern crate tokio_service;
 
 pub mod errors;
 pub mod version;
-pub mod config;
-pub mod models;
 pub mod store;
+pub mod models;
+pub mod config;
+pub mod api;
 pub mod network;
-pub mod manager;
 pub mod cli;
 
 pub const VERSION: &str = "0.1.0";

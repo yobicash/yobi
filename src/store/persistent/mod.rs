@@ -7,7 +7,7 @@ use errors::*;
 use store::common::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub enum DbMode {
+pub enum PersistentMode {
     Temporary,
     Persistent {
         path: String,
@@ -16,28 +16,28 @@ pub enum DbMode {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct DbConfig {
-    pub mode: DbMode,
+pub struct PersistendConfig {
+    pub mode: PersistentMode,
 }
 
-pub struct DbStore {
-    pub config: DbConfig,
+pub struct PersistentStore {
+    pub config: PersistendConfig,
     pub handle: UnQLite,
 }
 
-impl YStorage for DbStore {
-    type Config = DbConfig;
+impl YStorage for PersistentStore {
+    type Config = PersistendConfig;
         
     fn create(config: Self::Config) -> YHResult<Self> {
         match config.mode.clone() {
-            DbMode::Temporary => {
-                Ok(DbStore {
+            PersistentMode::Temporary => {
+                Ok(PersistentStore {
                     config: config,
                     handle: UnQLite::create_temp(),
                 })
             },
-            DbMode::Persistent{ path, .. } => {
-                Ok(DbStore {
+            PersistentMode::Persistent{ path, .. } => {
+                Ok(PersistentStore {
                     config: config,
                     handle: UnQLite::create(path.as_str()),
                 })
@@ -47,22 +47,22 @@ impl YStorage for DbStore {
 
     fn open(config: Self::Config) -> YHResult<Self> {
         match config.mode.clone() {
-            DbMode::Temporary => {
-                Ok(DbStore {
+            PersistentMode::Temporary => {
+                Ok(PersistentStore {
                     config: config,
                     handle: UnQLite::create_temp(),
                 })
             },
-            DbMode::Persistent{ path, read_only } => {
+            PersistentMode::Persistent{ path, read_only } => {
                 if read_only {
                     let handle = UnQLite::open_readonly(path.as_str());
-                    Ok(DbStore {
+                    Ok(PersistentStore {
                         config: config,
                         handle: handle,
                     })
                 } else {
                     let handle = UnQLite::create(path.as_str());
-                    Ok(DbStore {
+                    Ok(PersistentStore {
                         config: config,
                         handle: handle,
                     })
@@ -83,10 +83,10 @@ impl YStorage for DbStore {
 
     fn destroy(self) -> YHResult<()> {
         match self.config.mode {
-            DbMode::Temporary => {
+            PersistentMode::Temporary => {
                 Ok(())
             },
-            DbMode::Persistent{ path, read_only } => {
+            PersistentMode::Persistent{ path, read_only } => {
                 if read_only {
                     let err = IOError::new(IOErrorKind::PermissionDenied, "read only store");
                     Err(YHErrorKind::IO(err).into())
@@ -202,6 +202,6 @@ impl YStorage for DbStore {
         index.extend(buck.iter().cloned());
         index.extend(key.iter().cloned());
         self.handle.kv_delete(index.as_slice())
-            .map_err(|err| YHErrorKind::Db(err).into())
+            .map_err(|err| YHErrorKind::Store(err).into())
     }
 }
