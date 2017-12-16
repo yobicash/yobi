@@ -1,6 +1,9 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::utils::time::YTime;
+use libyobicash::utils::random::YRandom;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
+use store::common::*;
+use models::bucket::*;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -61,5 +64,109 @@ impl YPeer {
         };
         peer.check()?;
         Ok(peer)
+    }
+
+    pub fn by_ip_key(&self) -> YHResult<Vec<u8>> {
+        self.check()?;
+        let mut key = Vec::new();
+        key.put(&self.ip[..]);
+        Ok(key)
+    }
+
+    pub fn by_last_time_key(&self) -> YHResult<Vec<u8>> {
+        self.check()?;
+        let mut key = BytesMut::new();
+        key.put(&self.last_time.to_bytes()[..]);
+        key.put_u32::<BigEndian>(YRandom::u32());
+        Ok(key.to_vec())
+    }
+
+    pub fn lookup_by_ip<S: YStorage>(store: &S, ip: [u8; 4]) -> YHResult<bool> {
+        let store_buck = YBucket::PeersByIp.to_store_buck();
+        let mut key = Vec::new();
+        key.put(&ip[..]);
+        store.lookup(&store_buck, &key)
+    }
+
+    pub fn lookup_by_last_time<S: YStorage>(store: &S, last_time: YTime) -> YHResult<bool> {
+        let store_buck = YBucket::PeersByLastTime.to_store_buck();
+        let mut key = Vec::new();
+        key.put(&last_time.to_bytes()[..]);
+        store.lookup(&store_buck, &key)
+    }
+
+    pub fn list_by_ip<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<YPeer>> {
+        let store_buck = YBucket::PeersByIp.to_store_buck();
+        let keys = store.list(&store_buck, skip, count)?;
+        let mut peers = Vec::new();        
+        for key in keys {
+            let peer_buf = store.get(&store_buck, &key)?.value;
+            let peer = YPeer::from_bytes(&peer_buf)?;
+            peers.push(peer);
+        }
+        Ok(peers)
+    }
+
+    pub fn list_by_last_time<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<[u8; 4]>> {
+        let store_buck = YBucket::PeersByLastTime.to_store_buck();
+        let _keys = store.list_reverse(&store_buck, skip, count)?;
+        let mut keys: Vec<[u8; 4]> = Vec::new();        
+        for _key in _keys {
+            let key_buf = store.get(&store_buck, &_key)?.key;
+            let key = [key_buf[0], key_buf[1], key_buf[2], key_buf[3]];
+            keys.push(key);
+        }
+        Ok(keys)
+    }
+
+    pub fn get<S: YStorage>(store: &S, ip: [u8; 4]) -> YHResult<YPeer> {
+        let store_buck = YBucket::PeersByLastTime.to_store_buck();
+        let mut key = Vec::new();
+        key.put(&ip[..]);
+        let item = store.get(&store_buck, &key)?;
+        YPeer::from_bytes(&item.value)
+    }
+
+    pub fn create<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+        let store_buck_ip = YBucket::PeersByIp.to_store_buck();
+        let key_ip = self.by_ip_key()?;
+        if store.lookup(&store_buck_ip, &key_ip)? {
+            return Err(YHErrorKind::AlreadyFound.into());
+        }
+        let value = self.to_bytes()?;
+        store.put(&store_buck_ip, &key_ip, &value)?;
+        let store_buck_lt = YBucket::PeersByLastTime.to_store_buck();
+        let key_lt = self.by_last_time_key()?;
+        if store.lookup(&store_buck_lt, &key_lt)? {
+            return Err(YHErrorKind::AlreadyFound.into());
+        }
+        store.put(&store_buck_lt, &key_lt, &key_ip)?;
+        Ok(())
+    }
+
+    pub fn update<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+        let store_buck_ip = YBucket::PeersByIp.to_store_buck();
+        let key_ip = self.by_ip_key()?;
+        if !store.lookup(&store_buck_ip, &key_ip)? {
+            return Err(YHErrorKind::NotFound.into());
+        }
+        self.delete(store)?;
+        self.create(store)
+    }
+
+    pub fn delete<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+        let store_buck_ip = YBucket::PeersByIp.to_store_buck();
+        let key_ip = self.by_ip_key()?;
+        if !store.lookup(&store_buck_ip, &key_ip)? {
+            return Err(YHErrorKind::NotFound.into());
+        }
+        store.delete(&store_buck_ip, &key_ip)?;
+        let store_buck_lt = YBucket::PeersByLastTime.to_store_buck();
+        let key_lt = self.by_last_time_key()?;
+        if !store.lookup(&store_buck_lt, &key_lt)? {
+            return Err(YHErrorKind::NotFound.into());
+        }
+        store.delete(&store_buck_lt, &key_lt)?;
+        Ok(())
     }
 }

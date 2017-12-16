@@ -15,7 +15,6 @@ pub mod errors;
 pub mod version;
 pub mod config;
 pub mod models;
-pub mod api;
 pub mod store;
 pub mod network;
 pub mod manager;

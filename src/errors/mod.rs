@@ -18,6 +18,14 @@ error_chain! {
   }
 
   errors {
+    NotFound {
+        description("Not found")
+    }
+
+    AlreadyFound {
+        description("Already found")
+    }
+
     InvalidCoinKind {
         description("Invalid coin kind")
     }

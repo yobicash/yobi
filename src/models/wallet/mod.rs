@@ -1,73 +1,10 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
-use libyobicash::utils::time::YTime;
-use libyobicash::crypto::hash::digest::YDigest64;
-use libyobicash::crypto::elliptic::keys::YSecretKey;
 use libyobicash::amount::YAmount;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
+use store::common::*;
+use models::bucket::*;
+use models::coin::*;
 use errors::*;
-
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub struct YCoin {
-    pub date: YTime,
-    pub sk: YSecretKey,
-    pub tx_id: YDigest64,
-    pub idx: u32,
-    pub amount: YAmount,
-}
-
-impl YCoin {
-    pub fn new(date: YTime, sk: YSecretKey, tx_id: YDigest64, idx: u32, amount: &YAmount) -> YHResult<YCoin> {
-        if date > YTime::now() {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidTime).into());
-        }
-        Ok(YCoin {
-            date: date,
-            sk: sk,
-            tx_id: tx_id,
-            idx: idx,
-            amount: amount.clone(),
-        })
-    }
-
-    pub fn check(&self) -> YHResult<()> {
-        if self.date > YTime::now() {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidTime).into());
-        }
-        Ok(())
-    }
-
-    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
-        let mut buf = BytesMut::new();
-        buf.put(&self.date.to_bytes()[..]);
-        buf.put(self.sk.to_bytes());
-        buf.put(self.tx_id.to_bytes());
-        buf.put_u32::<BigEndian>(self.idx);
-        buf.put(self.amount.to_bytes()?);
-        Ok(buf.to_vec())
-    }
-
-    pub fn from_bytes(buf: &[u8]) -> YHResult<YCoin> {
-        if buf.len() < 141 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
-        }
-        let mut b = BytesMut::new();
-        b.extend_from_slice(buf);
-        let date = YTime::from_bytes(b.get(0..8).unwrap())?;
-        let sk = YSecretKey::from_bytes(b.get(8..72).unwrap())?;
-        let tx_id = YDigest64::from_bytes(b.get(72..136).unwrap())?;
-        let idx = BigEndian::read_u32(b.get(136..140).unwrap());
-        let amount = YAmount::from_bytes(b.get(140..).unwrap())?;
-        let coin = YCoin {
-            date: date,
-            sk: sk,
-            tx_id: tx_id,
-            idx: idx,
-            amount: amount,
-        };
-        coin.check()?;
-        Ok(coin)
-    }
-}
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct YWallet {
@@ -167,5 +104,68 @@ impl YWallet {
         };
         wallet.check()?;
         Ok(wallet)
+    }
+
+    pub fn key(&self) -> YHResult<Vec<u8>> {
+        self.check()?;
+        let mut key = Vec::new();
+        key.put(self.name.as_bytes());
+        Ok(key)
+    }
+
+    pub fn lookup<S: YStorage>(store: &S, name: &str) -> YHResult<bool> {
+        let store_buck = YBucket::Wallets.to_store_buck();
+        let mut key = Vec::new();
+        key.put(name.as_bytes());
+        store.lookup(&store_buck, &key)
+    }
+
+    pub fn list<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<YWallet>> {
+        let store_buck = YBucket::Wallets.to_store_buck();
+        let keys = store.list(&store_buck, skip, count)?;
+        let mut wallets = Vec::new();        
+        for key in keys {
+            let wallet_buf = store.get(&store_buck, &key)?.value;
+            let wallet = YWallet::from_bytes(&wallet_buf)?;
+            wallets.push(wallet);
+        }
+        Ok(wallets)
+    }
+
+    pub fn get<S: YStorage>(store: &S, name: &str) -> YHResult<YWallet> {
+        let store_buck = YBucket::Wallets.to_store_buck();
+        let mut key = Vec::new();
+        key.put(name.as_bytes());
+        let item = store.get(&store_buck, &key)?;
+        YWallet::from_bytes(&item.value)
+    }
+
+    pub fn create<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+        let store_buck = YBucket::Wallets.to_store_buck();
+        let key = self.key()?;
+        if store.lookup(&store_buck, &key)? {
+            return Err(YHErrorKind::AlreadyFound.into());
+        }
+        let value = self.to_bytes()?;
+        store.put(&store_buck, &key, &value)
+    }
+
+    pub fn update<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+        let store_buck = YBucket::Wallets.to_store_buck();
+        let key = self.key()?;
+        if !store.lookup(&store_buck, &key)? {
+            return Err(YHErrorKind::NotFound.into());
+        }
+        let value = self.to_bytes()?;
+        store.put(&store_buck, &key, &value)
+    }
+
+    pub fn delete<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+        let store_buck = YBucket::Wallets.to_store_buck();
+        let key = self.key()?;
+        if !store.lookup(&store_buck, &key)? {
+            return Err(YHErrorKind::NotFound.into());
+        }
+        store.delete(&store_buck, &key)
     }
 }

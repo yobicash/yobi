@@ -35,7 +35,9 @@ pub trait YStorage
 
     fn count(&self, buck: &YStoreBuck) -> YHResult<u64>;
 
-    fn list(&self, buck: &YStoreBuck) -> YHResult<Vec<YStoreKey>>;
+    fn list(&self, buck: &YStoreBuck, skip: u32, count: u32) -> YHResult<Vec<YStoreKey>>;
+
+    fn list_reverse(&self, buck: &YStoreBuck, skip: u32, count: u32) -> YHResult<Vec<YStoreKey>>;
 
     fn delete(&mut self, buck: &YStoreBuck, key: &YStoreKey) -> YHResult<()>;
 }

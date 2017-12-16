@@ -8,10 +8,6 @@ use store::common::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum DbMode {
-    Memory {
-        path: String,
-        read_only: bool,
-    },
     Temporary,
     Persistent {
         path: String,
@@ -34,12 +30,6 @@ impl YStorage for DbStore {
         
     fn create(config: Self::Config) -> YHResult<Self> {
         match config.mode.clone() {
-            DbMode::Memory { .. } => {
-                Ok(DbStore {
-                    config: config,
-                    handle: UnQLite::create_in_memory(),
-                })
-            },
             DbMode::Temporary => {
                 Ok(DbStore {
                     config: config,
@@ -57,21 +47,6 @@ impl YStorage for DbStore {
 
     fn open(config: Self::Config) -> YHResult<Self> {
         match config.mode.clone() {
-            DbMode::Memory { path, read_only } => {
-                if read_only {
-                    let handle = UnQLite::open_mmap(path.as_str());
-                    Ok(DbStore {
-                        config: config,
-                        handle: handle,
-                    })
-                } else {
-                    let handle = UnQLite::create_in_memory();
-                    Ok(DbStore {
-                        config: config,
-                        handle: handle,
-                    })
-                }
-            },
             DbMode::Temporary => {
                 Ok(DbStore {
                     config: config,
@@ -108,9 +83,6 @@ impl YStorage for DbStore {
 
     fn destroy(self) -> YHResult<()> {
         match self.config.mode {
-            DbMode::Memory { .. } => {
-                Ok(())
-            },
             DbMode::Temporary => {
                 Ok(())
             },
@@ -167,16 +139,56 @@ impl YStorage for DbStore {
         }
     }
 
-    fn list(&self, buck: &YStoreBuck) -> YHResult<Vec<YStoreKey>> {
+    fn list(&self, buck: &YStoreBuck, skip: u32, count: u32) -> YHResult<Vec<YStoreKey>> {
         let mut entry = self.handle.seek(buck.as_slice(), Direction::Ge);
         if entry.is_none() {
             return Err(YHErrorKind::IO(IOError::new(IOErrorKind::NotFound, "buck not found")).into());
         } else {
+            let mut _skip = skip;
+            let mut _count = count;
             let mut ls = Vec::new();
             loop {
-                let record = entry.unwrap();
-                ls.push(record.key());
-                entry = record.next();
+                if _skip == 0 {
+                    break;
+                }
+                if count != 0 {
+                    let record = entry.unwrap();
+                    ls.push(record.key());
+                    entry = record.next();
+                    _count -= 1;
+                    _skip -= 1;
+                } else {
+                    break;
+                }
+                if entry.is_none() {
+                    break;
+                }
+            }
+            Ok(ls)
+        }
+    }
+
+    fn list_reverse(&self, buck: &YStoreBuck, skip: u32, count: u32) -> YHResult<Vec<YStoreKey>> {
+        let mut entry = self.handle.seek(buck.as_slice(), Direction::Le);
+        if entry.is_none() {
+            return Err(YHErrorKind::IO(IOError::new(IOErrorKind::NotFound, "buck not found")).into());
+        } else {
+            let mut _skip = skip;
+            let mut _count = count;
+            let mut ls = Vec::new();
+            loop {
+                if _skip == 0 {
+                    break;
+                }
+                if count != 0 {
+                    let record = entry.unwrap();
+                    ls.push(record.key());
+                    entry = record.next();
+                    _count -= 1;
+                    _skip -= 1;
+                } else {
+                    break;
+                }
                 if entry.is_none() {
                     break;
                 }
