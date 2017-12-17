@@ -9,11 +9,9 @@ pub enum YBucket {
     Transactions=0,
     Data=1,
     Coinbases=2,
-    Ucoins=3,
-    Scoins=4,
-    Wallets=5,
-    PeersByIp=6,
-    PeersByLastTime=7,
+    Wallets=3,
+    PeersByIp=4,
+    PeersByLastTime=5,
     Unknown,
 }
 
@@ -29,11 +27,9 @@ impl From<u32> for YBucket {
             0 => YBucket::Transactions,
             1 => YBucket::Data,
             2 => YBucket::Coinbases,
-            3 => YBucket::Ucoins,
-            4 => YBucket::Scoins,
-            5 => YBucket::Wallets,
-            6 => YBucket::PeersByIp,
-            7 => YBucket::PeersByLastTime,
+            3 => YBucket::Wallets,
+            4 => YBucket::PeersByIp,
+            5 => YBucket::PeersByLastTime,
             _ => YBucket::Unknown,
         }
     }

@@ -33,7 +33,7 @@ pub trait YStorage
 
     fn get(&self, buck: &YStoreBuck, key: &YStoreKey) -> YHResult<YStoreItem>;
 
-    fn count(&self, buck: &YStoreBuck) -> YHResult<u64>;
+    fn count(&self, buck: &YStoreBuck) -> YHResult<u32>;
 
     fn list(&self, buck: &YStoreBuck, skip: u32, count: u32) -> YHResult<Vec<YStoreKey>>;
 

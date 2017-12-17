@@ -66,19 +66,27 @@ impl YPeer {
         Ok(peer)
     }
 
-    pub fn by_ip_key(&self) -> YHResult<Vec<u8>> {
+    pub fn by_ip_key(&self) -> YHResult<YStoreKey> {
         self.check()?;
         let mut key = Vec::new();
         key.put(&self.ip[..]);
         Ok(key)
     }
 
-    pub fn by_last_time_key(&self) -> YHResult<Vec<u8>> {
+    pub fn by_last_time_key(&self) -> YHResult<YStoreKey> {
         self.check()?;
         let mut key = BytesMut::new();
         key.put(&self.last_time.to_bytes()[..]);
         key.put_u32::<BigEndian>(YRandom::u32());
         Ok(key.to_vec())
+    }
+
+    pub fn value(&self) -> YHResult<YStoreValue> {
+        self.to_bytes()
+    }
+
+    pub fn from_value(value: &YStoreValue) -> YHResult<YPeer> {
+        YPeer::from_bytes(value)
     }
 
     pub fn lookup_by_ip<S: YStorage>(store: &S, ip: [u8; 4]) -> YHResult<bool> {
@@ -95,13 +103,23 @@ impl YPeer {
         store.lookup(&store_buck, &key)
     }
 
+    pub fn count_by_ip<S: YStorage>(store: &S) -> YHResult<u32> {
+        let store_buck = YBucket::PeersByIp.to_store_buck();
+        store.count(&store_buck)
+    }
+
+    pub fn count_by_last_time<S: YStorage>(store: &S) -> YHResult<u32> {
+        let store_buck = YBucket::PeersByLastTime.to_store_buck();
+        store.count(&store_buck)
+    }
+
     pub fn list_by_ip<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<YPeer>> {
         let store_buck = YBucket::PeersByIp.to_store_buck();
         let keys = store.list(&store_buck, skip, count)?;
         let mut peers = Vec::new();        
         for key in keys {
-            let peer_buf = store.get(&store_buck, &key)?.value;
-            let peer = YPeer::from_bytes(&peer_buf)?;
+            let item = store.get(&store_buck, &key)?;
+            let peer = YPeer::from_value(&item.value)?;
             peers.push(peer);
         }
         Ok(peers)
@@ -124,7 +142,7 @@ impl YPeer {
         let mut key = Vec::new();
         key.put(&ip[..]);
         let item = store.get(&store_buck, &key)?;
-        YPeer::from_bytes(&item.value)
+        YPeer::from_value(&item.value)
     }
 
     pub fn create<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
@@ -133,7 +151,7 @@ impl YPeer {
         if store.lookup(&store_buck_ip, &key_ip)? {
             return Err(YHErrorKind::AlreadyFound.into());
         }
-        let value = self.to_bytes()?;
+        let value = self.value()?;
         store.put(&store_buck_ip, &key_ip, &value)?;
         let store_buck_lt = YBucket::PeersByLastTime.to_store_buck();
         let key_lt = self.by_last_time_key()?;

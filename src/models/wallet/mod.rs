@@ -1,5 +1,7 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::amount::YAmount;
+use libyobicash::crypto::key::YKey32;
+use libyobicash::crypto::encryption::symmetric::YSymmetricEncryption as YSE;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use store::common::*;
 use models::bucket::*;
@@ -106,63 +108,105 @@ impl YWallet {
         Ok(wallet)
     }
 
-    pub fn key(&self) -> YHResult<Vec<u8>> {
+    pub fn enc_key(&self, ekey: YKey32) -> YHResult<YStoreKey> {
         self.check()?;
         let mut key = Vec::new();
         key.put(self.name.as_bytes());
+        let padding = key.len() % 16;
+        for _ in 0..padding {
+            key.push(0);
+        }
+        key = YSE::encrypt(ekey, &key)?;
         Ok(key)
     }
 
-    pub fn lookup<S: YStorage>(store: &S, name: &str) -> YHResult<bool> {
+    pub fn enc_value(&self, ekey: YKey32) -> YHResult<YStoreValue> {
+        self.check()?;
+        let wallet_buf = self.to_bytes()?;
+        let wallet_len = wallet_buf.len() as u32;
+        let mut value = Vec::new();
+        value.put_u32::<BigEndian>(wallet_len);
+        value.put(wallet_buf);
+        let padding = value.len() % 16;
+        for _ in 0..padding {
+            value.push(0);
+        }
+        value = YSE::encrypt(ekey, &value)?;
+        Ok(value)
+    }
+
+    pub fn dec_value(ekey: YKey32, value: &YStoreValue) -> YHResult<YWallet> {
+        let dec = YSE::decrypt(ekey, value)?;
+        let wallet_len = BigEndian::read_u32(dec.get(0..4).unwrap());
+        let wallet_buf = dec.get(4..wallet_len as usize).unwrap();
+        YWallet::from_bytes(wallet_buf)
+    }
+
+    pub fn lookup<S: YStorage>(store: &S, ekey: YKey32, name: &str) -> YHResult<bool> {
         let store_buck = YBucket::Wallets.to_store_buck();
         let mut key = Vec::new();
         key.put(name.as_bytes());
+        let padding = key.len() % 16;
+        for _ in 0..padding {
+            key.push(0);
+        }
+        key = YSE::encrypt(ekey, &key)?;
         store.lookup(&store_buck, &key)
     }
 
-    pub fn list<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<YWallet>> {
+    pub fn count<S: YStorage>(store: &S) -> YHResult<u32> {
+        let store_buck = YBucket::Wallets.to_store_buck();
+        store.count(&store_buck)
+    }
+
+    pub fn list<S: YStorage>(store: &S, ekey: YKey32, skip: u32, count: u32) -> YHResult<Vec<YWallet>> {
         let store_buck = YBucket::Wallets.to_store_buck();
         let keys = store.list(&store_buck, skip, count)?;
         let mut wallets = Vec::new();        
         for key in keys {
-            let wallet_buf = store.get(&store_buck, &key)?.value;
-            let wallet = YWallet::from_bytes(&wallet_buf)?;
+            let item = store.get(&store_buck, &key)?;
+            let wallet = YWallet::dec_value(ekey, &item.value)?;
             wallets.push(wallet);
         }
         Ok(wallets)
     }
 
-    pub fn get<S: YStorage>(store: &S, name: &str) -> YHResult<YWallet> {
+    pub fn get<S: YStorage>(store: &S, ekey: YKey32, name: &str) -> YHResult<YWallet> {
         let store_buck = YBucket::Wallets.to_store_buck();
         let mut key = Vec::new();
         key.put(name.as_bytes());
+        let padding = key.len() % 16;
+        for _ in 0..padding {
+            key.push(0);
+        }
+        key = YSE::encrypt(ekey, &key)?;
         let item = store.get(&store_buck, &key)?;
-        YWallet::from_bytes(&item.value)
+        YWallet::dec_value(ekey, &item.value)
     }
 
-    pub fn create<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+    pub fn create<S: YStorage>(&self, store: &mut S, ekey: YKey32) -> YHResult<()> {
         let store_buck = YBucket::Wallets.to_store_buck();
-        let key = self.key()?;
+        let key = self.enc_key(ekey)?;
         if store.lookup(&store_buck, &key)? {
             return Err(YHErrorKind::AlreadyFound.into());
         }
-        let value = self.to_bytes()?;
+        let value = self.enc_value(ekey)?;
         store.put(&store_buck, &key, &value)
     }
 
-    pub fn update<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+    pub fn update<S: YStorage>(&self, store: &mut S, ekey: YKey32) -> YHResult<()> {
         let store_buck = YBucket::Wallets.to_store_buck();
-        let key = self.key()?;
+        let key = self.enc_key(ekey)?;
         if !store.lookup(&store_buck, &key)? {
             return Err(YHErrorKind::NotFound.into());
         }
-        let value = self.to_bytes()?;
+        let value = self.enc_value(ekey)?;
         store.put(&store_buck, &key, &value)
     }
 
-    pub fn delete<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
+    pub fn delete<S: YStorage>(&self, store: &mut S, ekey: YKey32) -> YHResult<()> {
         let store_buck = YBucket::Wallets.to_store_buck();
-        let key = self.key()?;
+        let key = self.enc_key(ekey)?;
         if !store.lookup(&store_buck, &key)? {
             return Err(YHErrorKind::NotFound.into());
         }

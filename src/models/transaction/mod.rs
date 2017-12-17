@@ -35,10 +35,23 @@ impl YTransaction {
         Ok(key)
     }
 
+    pub fn value(&self) -> YHResult<YStoreValue> {
+        self.to_bytes()
+    }
+
+    pub fn from_value(value: &YStoreValue) -> YHResult<YTransaction> {
+        YTransaction::from_bytes(value)
+    }
+
     pub fn lookup<S: YStorage>(store: &S, id: YDigest64) -> YHResult<bool> {
         let store_buck = YBucket::Transactions.to_store_buck();
         let key = id.to_bytes();
         store.lookup(&store_buck, &key)
+    }
+
+    pub fn count<S: YStorage>(store: &S) -> YHResult<u32> {
+        let store_buck = YBucket::Transactions.to_store_buck();
+        store.count(&store_buck)
     }
 
     pub fn list<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<YTransaction>> {
@@ -46,8 +59,8 @@ impl YTransaction {
         let keys = store.list(&store_buck, skip, count)?;
         let mut transactions = Vec::new();        
         for key in keys {
-            let cb_buf = store.get(&store_buck, &key)?.value;
-            let cb = YTransaction::from_bytes(&cb_buf)?;
+            let item = store.get(&store_buck, &key)?;
+            let cb = YTransaction::from_value(&item.value)?;
             transactions.push(cb);
         }
         Ok(transactions)
@@ -57,7 +70,7 @@ impl YTransaction {
         let store_buck = YBucket::Transactions.to_store_buck();
         let key = id.to_bytes();
         let item = store.get(&store_buck, &key)?;
-        YTransaction::from_bytes(&item.value)
+        YTransaction::from_value(&item.value)
     }
 
     pub fn create<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
@@ -66,7 +79,7 @@ impl YTransaction {
         if store.lookup(&store_buck, &key)? {
             return Err(YHErrorKind::AlreadyFound.into());
         }
-        let value = self.to_bytes()?;
+        let value = self.value()?;
         store.put(&store_buck, &key, &value)
     }
 

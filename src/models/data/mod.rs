@@ -29,12 +29,20 @@ impl YData {
         Ok(YData(LibData::from_bytes(buf)?))
     }
 
-    pub fn key(&self) -> YHResult<Vec<u8>> {
+    pub fn key(&self) -> YHResult<YStoreKey> {
         self.check()?;
         let mut key = Vec::new();
         key.put(self.0.checksum.to_bytes());
         key.put(self.0.tag.to_bytes());
         Ok(key)
+    }
+
+    pub fn value(&self) -> YHResult<YStoreValue> {
+        self.to_bytes()
+    }
+
+    pub fn from_value(value: &YStoreValue) -> YHResult<YData> {
+        YData::from_bytes(value)
     }
 
     pub fn lookup<S: YStorage>(store: &S, checksum: YDigest64, tag: YMACCode) -> YHResult<bool> {
@@ -45,13 +53,18 @@ impl YData {
         store.lookup(&store_buck, &key)
     }
 
+    pub fn count<S: YStorage>(store: &S) -> YHResult<u32> {
+        let store_buck = YBucket::Data.to_store_buck();
+        store.count(&store_buck)
+    }
+
     pub fn list<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<YData>> {
         let store_buck = YBucket::Data.to_store_buck();
         let keys = store.list(&store_buck, skip, count)?;
         let mut data = Vec::new();        
         for key in keys {
-            let d_buf = store.get(&store_buck, &key)?.value;
-            let d = YData::from_bytes(&d_buf)?;
+            let item = store.get(&store_buck, &key)?;
+            let d = YData::from_value(&item.value)?;
             data.push(d);
         }
         Ok(data)
@@ -63,7 +76,7 @@ impl YData {
         key.put(checksum.to_bytes());
         key.put(tag.to_bytes());
         let item = store.get(&store_buck, &key)?;
-        YData::from_bytes(&item.value)
+        YData::from_value(&item.value)
     }
 
     pub fn create<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
@@ -72,7 +85,7 @@ impl YData {
         if store.lookup(&store_buck, &key)? {
             return Err(YHErrorKind::AlreadyFound.into());
         }
-        let value = self.to_bytes()?;
+        let value = self.value()?;
         store.put(&store_buck, &key, &value)
     }
 

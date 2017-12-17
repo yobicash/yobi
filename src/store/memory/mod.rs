@@ -86,7 +86,7 @@ impl YStorage for MemoryStore {
             .map_err(|err| YHErrorKind::IO(IOError::new(IOErrorKind::Other, err.description())).into())
     }
 
-    fn count(&self, buck: &YStoreBuck) -> YHResult<u64> {
+    fn count(&self, buck: &YStoreBuck) -> YHResult<u32> {
         let mut entry = self.handle.seek(buck.as_slice(), Direction::Ge);
         if entry.is_none() {
             return Err(YHErrorKind::IO(IOError::new(IOErrorKind::NotFound, "buck not found")).into());
