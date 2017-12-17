@@ -30,7 +30,7 @@ impl YCoinKind {
 
     pub fn from_bytes(b: &[u8]) -> YHResult<YCoinKind> {
         if b.len() != 4 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         match BigEndian::read_u32(b) {
             0 => { Ok(YCoinKind::Coinbase) },

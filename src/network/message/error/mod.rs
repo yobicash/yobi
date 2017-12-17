@@ -1,4 +1,3 @@
-use libyobicash::errors::YErrorKind as LibErrorKind;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use network::rpc_method::YRPCMethod;
 use errors::*;
@@ -19,7 +18,7 @@ impl YHErrorRes {
 
     pub fn check(&self) -> YHResult<()> {
         if self.message.len() > 20 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         Ok(())
     }
@@ -33,7 +32,7 @@ impl YHErrorRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YHErrorRes> {
         if buf.len() > 44 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

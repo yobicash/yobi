@@ -72,7 +72,7 @@ impl YWallet {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YWallet> {
         if buf.len() < 8 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

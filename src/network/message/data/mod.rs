@@ -1,4 +1,3 @@
-use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::data::YData;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
@@ -36,7 +35,7 @@ impl YListDataReq {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YListDataReq> {
         if buf.len() != 108 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -72,7 +71,7 @@ impl YListDataRes {
             return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         if self.data.len() != self.count as usize {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         Ok(())
     }
@@ -93,7 +92,7 @@ impl YListDataRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YListDataRes> {
         if buf.len() < 8 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -146,7 +145,7 @@ impl YGetDataReq {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YGetDataReq> {
         if buf.len() != 68 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -192,7 +191,7 @@ impl YGetDataRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YGetDataRes> {
         if buf.len() < 104 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

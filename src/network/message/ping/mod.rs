@@ -1,4 +1,3 @@
-use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::crypto::elliptic::keys::YPublicKey;
 use libyobicash::amount::YAmount;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
@@ -31,7 +30,7 @@ impl YPingReq {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YPingReq> {
         if buf.len() != 4 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let ping_req = YPingReq {
             method: BigEndian::read_u32(buf).into(),
@@ -75,7 +74,7 @@ impl YPingRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YPingRes> {
         if buf.len() < 69 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

@@ -18,12 +18,20 @@ error_chain! {
   }
 
   errors {
+    InvalidLength {
+        description("Invalid length")
+    }
+    
     NotFound {
         description("Not found")
     }
 
     AlreadyFound {
         description("Already found")
+    }
+
+    ParsingFailure {
+        description("Parsing failure")
     }
 
     InvalidCoinKind {

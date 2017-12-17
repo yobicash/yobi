@@ -1,3 +1,4 @@
+pub mod address;
 pub mod rpc_method;
 pub mod message;
 pub mod codec;
@@ -6,6 +7,7 @@ pub mod service;
 pub mod server;
 pub mod client;
 
+pub use self::address::*;
 pub use self::rpc_method::*;
 pub use self::message::*;
 pub use self::codec::*;

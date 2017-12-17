@@ -1,4 +1,3 @@
-use libyobicash::errors::YErrorKind as LibErrorKind;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use models::peer::YPeer;
 use network::rpc_method::YRPCMethod;
@@ -35,7 +34,7 @@ impl YListPeersReq {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YListPeersReq> {
         if buf.len() != 8 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -71,7 +70,7 @@ impl YListPeersRes {
             return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         if self.peers.len() != self.count as usize {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         Ok(())
     }
@@ -92,7 +91,7 @@ impl YListPeersRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YListPeersRes> {
         if buf.len() < 8 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

@@ -34,7 +34,7 @@ impl YMessageKind {
 
     pub fn from_bytes(b: &[u8]) -> YHResult<YMessageKind> {
         if b.len() != 4 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         match BigEndian::read_u32(b) {
             0 => { Ok(YMessageKind::Request) },
@@ -78,7 +78,7 @@ impl YMessageStatus {
 
     pub fn from_bytes(b: &[u8]) -> YHResult<YMessageStatus> {
         if b.len() != 4 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         match BigEndian::read_u32(b) {
             0 => { Ok(YMessageStatus::Failure) },
@@ -166,7 +166,7 @@ impl YMessage {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YMessage> { 
         if buf.len() < 100 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

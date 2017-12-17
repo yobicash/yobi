@@ -1,4 +1,3 @@
-use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::transaction::YTransaction;
 use libyobicash::coinbase::YCoinbase;
@@ -37,7 +36,7 @@ impl YListTxAncestorsReq {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YListTxAncestorsReq> {
         if buf.len() != 68 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -73,7 +72,7 @@ impl YListTxAncestorsRes {
             return Err(YHErrorKind::InvalidRPCMethod.into());
         }
         if self.txs.len() != self.count as usize {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         Ok(())
     }
@@ -94,7 +93,7 @@ impl YListTxAncestorsRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YListTxAncestorsRes> {
         if buf.len() < 48 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -148,7 +147,7 @@ impl YGetTxReq {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YGetTxReq> {
         if buf.len() != 68 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -194,7 +193,7 @@ impl YGetTxRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YGetTxRes> {
         if buf.len() < 108 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -240,7 +239,7 @@ impl YConfirmTxReq {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YConfirmTxReq> {
         if buf.len() != 68 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -289,7 +288,7 @@ impl YConfirmTxRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YConfirmTxRes> {
         if buf.len() < 112 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

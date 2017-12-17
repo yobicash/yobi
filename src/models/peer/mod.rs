@@ -1,31 +1,28 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::utils::time::YTime;
 use libyobicash::utils::random::YRandom;
-use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
+use bytes::{BytesMut, BufMut, BigEndian};
 use store::common::*;
 use models::bucket::*;
+use network::address::*;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct YPeer {
-    pub ip: [u8; 4],
-    pub port: u16,
+    pub address: YAddress,
     pub last_time: YTime,
 }
 
 impl Default for YPeer {
     fn default() -> YPeer {
-        let ip = [0, 0, 0, 0];
-        let port = 2112;
-        YPeer::new(ip, port)
+        YPeer::new(YAddress::default())
     }
 }
 
 impl YPeer {
-    pub fn new(ip: [u8; 4], port: u16) -> YPeer {
+    pub fn new(addr: YAddress) -> YPeer {
         YPeer {
-            ip: ip,
-            port: port,
+            address: addr,
             last_time: YTime::now(),
         }
     }
@@ -39,27 +36,21 @@ impl YPeer {
 
     pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         let mut buf = BytesMut::new();
-        buf.put(&self.ip[..]);
-        buf.put_u16::<BigEndian>(self.port);
+        buf.put(&self.address.to_bytes());
         buf.put(&self.last_time.to_bytes()[..]);
         Ok(buf.to_vec())
     }
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YPeer> {
         if buf.len() != 14 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let mut ip = [0u8; 4];
-        for i in 0..4 {
-            ip[i] = b[i]
-        }
-        let port = BigEndian::read_u16(b.get(4..6).unwrap());
+        let address = YAddress::from_bytes(b.get(0..6).unwrap())?;
         let last_time = YTime::from_bytes(b.get(6..).unwrap())?;
         let peer = YPeer {
-            ip: ip,
-            port: port,
+            address: address,
             last_time: last_time,
         };
         peer.check()?;
@@ -69,7 +60,7 @@ impl YPeer {
     pub fn by_ip_key(&self) -> YHResult<YStoreKey> {
         self.check()?;
         let mut key = Vec::new();
-        key.put(&self.ip[..]);
+        key.put(&self.address.host[..]);
         Ok(key)
     }
 

@@ -1,4 +1,3 @@
-use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::coinbase::YCoinbase;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
@@ -36,7 +35,7 @@ impl YGetCbReq {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YGetCbReq> {
         if buf.len() != 68 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
@@ -82,7 +81,7 @@ impl YGetCbRes {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YGetCbRes> {
         if buf.len() < 108 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);

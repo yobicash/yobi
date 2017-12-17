@@ -1,4 +1,3 @@
-use libyobicash::errors::YErrorKind as LibErrorKind;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use std::convert::From;
 use errors::*;
@@ -47,7 +46,7 @@ impl YRPCMethod {
 
     pub fn from_bytes(b: &[u8]) -> YHResult<YRPCMethod> {
         if b.len() != 4 {
-            return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
+            return Err(YHErrorKind::InvalidLength.into());
         }
         Ok(BigEndian::read_u32(b).into())
     }
