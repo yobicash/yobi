@@ -7,7 +7,7 @@ use errors::*;
 use store::common::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub enum PersistentMode {
+pub enum YPersistentMode {
     Temporary,
     Persistent {
         path: String,
@@ -16,30 +16,32 @@ pub enum PersistentMode {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct PersistendConfig {
-    pub mode: PersistentMode,
+pub struct YPersistentConfig {
+    pub mode: YPersistentMode,
 }
 
-pub struct PersistentStore {
-    pub config: PersistendConfig,
+pub struct YPersistentStore {
+    pub config: YPersistentConfig,
     pub handle: UnQLite,
 }
 
-impl YStorage for PersistentStore {
-    type Config = PersistendConfig;
+impl YStorage for YPersistentStore {
+    type Config = YPersistentConfig;
         
     fn create(config: Self::Config) -> YHResult<Self> {
         match config.mode.clone() {
-            PersistentMode::Temporary => {
-                Ok(PersistentStore {
+            YPersistentMode::Temporary => {
+                let handle = UnQLite::create_temp();
+                Ok(YPersistentStore {
                     config: config,
-                    handle: UnQLite::create_temp(),
+                    handle: handle,
                 })
             },
-            PersistentMode::Persistent{ path, .. } => {
-                Ok(PersistentStore {
+            YPersistentMode::Persistent{ path, .. } => {
+                let handle = UnQLite::create(path.as_str());
+                Ok(YPersistentStore {
                     config: config,
-                    handle: UnQLite::create(path.as_str()),
+                    handle: handle,
                 })
             },
         }
@@ -47,22 +49,23 @@ impl YStorage for PersistentStore {
 
     fn open(config: Self::Config) -> YHResult<Self> {
         match config.mode.clone() {
-            PersistentMode::Temporary => {
-                Ok(PersistentStore {
+            YPersistentMode::Temporary => {
+                let handle = UnQLite::create_temp();
+                Ok(YPersistentStore {
                     config: config,
-                    handle: UnQLite::create_temp(),
+                    handle: handle,
                 })
             },
-            PersistentMode::Persistent{ path, read_only } => {
+            YPersistentMode::Persistent{ path, read_only } => {
                 if read_only {
                     let handle = UnQLite::open_readonly(path.as_str());
-                    Ok(PersistentStore {
+                    Ok(YPersistentStore {
                         config: config,
                         handle: handle,
                     })
                 } else {
                     let handle = UnQLite::create(path.as_str());
-                    Ok(PersistentStore {
+                    Ok(YPersistentStore {
                         config: config,
                         handle: handle,
                     })
@@ -72,21 +75,22 @@ impl YStorage for PersistentStore {
     }
 
     fn close(&mut self) -> YHResult<()> {
+        let _ = self.handle;
         Ok(())
     }
 
-    fn reset(self) -> YHResult<Self> {
+    fn reset(&mut self) -> YHResult<Self> {
         let config = self.config.clone();
         self.destroy()?;
         Self::create(config)
     }
 
-    fn destroy(self) -> YHResult<()> {
-        match self.config.mode {
-            PersistentMode::Temporary => {
-                Ok(())
+    fn destroy(&mut self) -> YHResult<()> {
+        match self.config.mode.clone() {
+            YPersistentMode::Temporary => {
+                self.close()
             },
-            PersistentMode::Persistent{ path, read_only } => {
+            YPersistentMode::Persistent{ path, read_only } => {
                 if read_only {
                     let err = IOError::new(IOErrorKind::PermissionDenied, "read only store");
                     Err(YHErrorKind::IO(err).into())

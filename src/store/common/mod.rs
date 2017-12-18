@@ -23,9 +23,9 @@ pub trait YStorage
 
     fn close(&mut self) -> YHResult<()>;
 
-    fn reset(self) -> YHResult<Self>;
+    fn reset(&mut self) -> YHResult<Self>;
 
-    fn destroy(self) -> YHResult<()>;
+    fn destroy(&mut self) -> YHResult<()>;
 
     fn put(&mut self, buck: &YStoreBuck, key: &YStoreKey, value: &YStoreValue) -> YHResult<()>;
 

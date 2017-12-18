@@ -4,35 +4,84 @@ use store::*;
 use models::*;
 use config::*;
 
-pub struct YAPIStore<S: YStorage> {
-    pub memory: Option<S>,
-    pub persistent: Option<S>,
+pub struct YAPIStore<M, P: YStorage> {
+    pub memory: M,
+    pub persistent: P,
 }
 
-pub struct YAPI<S: YStorage> {
+pub struct YAPI<M, P: YStorage> {
     pub config: YConfig,
-    pub store: YAPIStore<S>,
+    pub store: YAPIStore<M, P>,
 }
 
-impl<S: YStorage> YAPI<S> {
-    pub fn open_store() {
-        unreachable!()
+impl YAPI<YMemoryStore, YPersistentStore> {
+    pub fn new(home_dir: Option<String>, read_only: bool) -> YHResult<YAPI<YMemoryStore, YPersistentStore>> {
+        let config = YConfig::read(home_dir)?;
+        let mem_config = YMemoryConfig {
+            mode: YMemoryMode {
+                path: config.db_path.clone(),
+                read_only: read_only,
+            }, 
+        };
+        let mem_store = YMemoryStore::open(mem_config)?;
+        let per_config = YPersistentConfig {
+            mode: YPersistentMode::Persistent {
+                path: config.db_path.clone(),
+                read_only: read_only,
+            },
+        };
+        let per_store = YPersistentStore::open(per_config)?;
+        let store = YAPIStore {
+            memory: mem_store,
+            persistent: per_store,
+        };
+        let api = YAPI::<YMemoryStore, YPersistentStore> {
+            config: config,
+            store: store,
+        };
+        Ok(api)
     }
 
-    pub fn close_store() {
-        unreachable!()
+    pub fn new_temporary(home_dir: Option<String>) -> YHResult<YAPI<YMemoryStore, YPersistentStore>> {
+        let config = YConfig::read(home_dir)?;
+        let mem_config = YMemoryConfig {
+            mode: YMemoryMode {
+                path: config.db_path.clone(),
+                read_only: false,
+            }, 
+        };
+        let mem_store = YMemoryStore::create(mem_config)?;
+        let per_config = YPersistentConfig {
+            mode: YPersistentMode::Temporary,
+        };
+        let per_store = YPersistentStore::create(per_config)?;
+        let store = YAPIStore {
+            memory: mem_store,
+            persistent: per_store,
+        };
+        let api = YAPI::<YMemoryStore, YPersistentStore> {
+            config: config,
+            store: store,
+        };
+        Ok(api)
     }
 
-    pub fn reset_store() {
-        unreachable!()
+    pub fn close_store(&mut self) -> YHResult<()> {
+        self.store.memory.close()?;
+        self.store.persistent.close()?;
+        Ok(())
     }
 
-    pub fn delete_store() {
-        unreachable!()
+    pub fn reset_store(&mut self) -> YHResult<()> {
+        self.store.memory = self.store.memory.reset()?;
+        self.store.persistent = self.store.persistent.reset()?;
+        Ok(())
     }
 
-    pub fn ping() {
-        unreachable!()
+    pub fn destroy_store(&mut self) -> YHResult<()> {
+        self.store.memory.destroy()?;
+        self.store.persistent.destroy()?;
+        Ok(())
     }
 
     pub fn info() {

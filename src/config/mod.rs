@@ -66,6 +66,10 @@ impl YConfigDir {
         create_dir_all(Self::subdir(&path)?)?;
         Ok(())
     }
+
+    pub fn init() -> YHResult<()> {
+        YConfigDir::create_home()
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Deserialize, Serialize)]

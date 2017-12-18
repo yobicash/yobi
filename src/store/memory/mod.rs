@@ -6,26 +6,26 @@ use errors::*;
 use store::common::*;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct MemoryMode {
+pub struct YMemoryMode {
     pub path: String,
     pub read_only: bool,
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct MemoryConfig {
-    pub mode: MemoryMode,
+pub struct YMemoryConfig {
+    pub mode: YMemoryMode,
 }
 
-pub struct MemoryStore {
-    pub config: MemoryConfig,
+pub struct YMemoryStore {
+    pub config: YMemoryConfig,
     pub handle: UnQLite,
 }
 
-impl YStorage for MemoryStore {
-    type Config = MemoryConfig;
+impl YStorage for YMemoryStore {
+    type Config = YMemoryConfig;
         
     fn create(config: Self::Config) -> YHResult<Self> {
-        Ok(MemoryStore {
+        Ok(YMemoryStore {
             config: config,
             handle: UnQLite::create_in_memory(),
         })
@@ -34,13 +34,13 @@ impl YStorage for MemoryStore {
     fn open(config: Self::Config) -> YHResult<Self> {
         if config.mode.read_only {
             let handle = UnQLite::open_mmap(config.mode.path.as_str());
-            Ok(MemoryStore {
+            Ok(YMemoryStore {
                 config: config,
                 handle: handle,
             })
         } else {
             let handle = UnQLite::create_in_memory();
-            Ok(MemoryStore {
+            Ok(YMemoryStore {
                 config: config,
                 handle: handle,
             })
@@ -48,16 +48,17 @@ impl YStorage for MemoryStore {
     }
 
     fn close(&mut self) -> YHResult<()> {
+        let _ = self.handle;
         Ok(())
     }
 
-    fn reset(self) -> YHResult<Self> {
+    fn reset(&mut self) -> YHResult<Self> {
         let config = self.config.clone();
         self.destroy()?;
         Self::create(config)
     }
 
-    fn destroy(self) -> YHResult<()> {
+    fn destroy(&mut self) -> YHResult<()> {
         let _ = self.handle;
         Ok(())
     }
