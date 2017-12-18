@@ -3,8 +3,6 @@ extern crate libyobicash;
 #[macro_use]
 extern crate error_chain;
 extern crate bytes;
-extern crate chrono;
-extern crate semver;
 extern crate futures;
 extern crate futures_await;
 extern crate unqlite;
@@ -14,6 +12,10 @@ extern crate tokio_service;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 
 pub mod errors;
 pub mod version;

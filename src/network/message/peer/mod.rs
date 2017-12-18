@@ -3,7 +3,7 @@ use models::peer::YPeer;
 use network::rpc_method::YRPCMethod;
 use errors::*;
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YListPeersReq {
     pub method: YRPCMethod,
     pub max: u32,
@@ -49,7 +49,7 @@ impl YListPeersReq {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Default, Debug)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Serialize, Deserialize)]
 pub struct YListPeersRes {
     pub method: YRPCMethod,
     pub count: u32,

@@ -65,7 +65,7 @@ impl YConfigDir {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Deserialize, Serialize)]
 pub struct YConfig {
     pub password: String,
     pub db_path: String,
@@ -120,11 +120,11 @@ impl YConfig {
         0
     }
 
-    pub fn save(&self, path: Option<String>) -> YHResult<()> {
+    pub fn read(path: Option<String>) -> YHResult<YConfig> {
         unreachable!()
     }
 
-    pub fn read(path: Option<String>) -> YHResult<YConfig> {
+    pub fn write(&self, path: Option<String>) -> YHResult<()> {
         unreachable!()
     }
 }

@@ -5,7 +5,7 @@ use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use network::rpc_method::YRPCMethod;
 use errors::*;
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YListTxAncestorsReq {
     pub method: YRPCMethod,
     pub tx_id: YDigest64,
@@ -51,7 +51,7 @@ impl YListTxAncestorsReq {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Default, Debug)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Serialize, Deserialize)]
 pub struct YListTxAncestorsRes {
     pub method: YRPCMethod,
     pub count: u32,
@@ -116,7 +116,7 @@ impl YListTxAncestorsRes {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YGetTxReq {
     pub method: YRPCMethod,
     pub tx_id: YDigest64,
@@ -162,7 +162,7 @@ impl YGetTxReq {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Default, Debug)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Serialize, Deserialize)]
 pub struct YGetTxRes {
     pub method: YRPCMethod,
     pub tx: YTransaction,
@@ -208,7 +208,7 @@ impl YGetTxRes {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YConfirmTxReq {
     pub method: YRPCMethod,
     pub tx_id: YDigest64,
@@ -254,7 +254,7 @@ impl YConfirmTxReq {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Default, Debug)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Serialize, Deserialize)]
 pub struct YConfirmTxRes {
     pub method: YRPCMethod,
     pub ack: bool,

@@ -4,7 +4,7 @@ use std::convert::From;
 use store::common::YStoreBuck;
 use errors::*;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum YBucket {
     Transactions=0,
     Data=1,

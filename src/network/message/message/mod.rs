@@ -10,10 +10,10 @@ use network::rpc_method::*;
 use version::*;
 use errors::*;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum YMessageKind {
-    Request,
-    Response,
+    Request=0,
+    Response=1,
 }
 
 impl YMessageKind {
@@ -54,10 +54,10 @@ impl From<u32> for YMessageKind {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum YMessageStatus {
-    Failure,
-    Success,
+    Failure=0,
+    Success=1,
 }
 
 impl YMessageStatus {
@@ -98,7 +98,7 @@ impl From<u32> for YMessageStatus {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct YMessage {
     pub id: YDigest64,
     pub version: YVersion,

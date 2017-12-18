@@ -4,7 +4,7 @@ use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use network::rpc_method::YRPCMethod;
 use errors::*;
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YPingReq {
     pub method: YRPCMethod,
 }
@@ -40,7 +40,7 @@ impl YPingReq {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Default, Debug)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Serialize, Deserialize)]
 pub struct YPingRes {
     pub method: YRPCMethod,
     pub public_key: YPublicKey,
@@ -68,7 +68,7 @@ impl YPingRes {
         let mut buf = BytesMut::new();
         buf.put(self.method.to_bytes());
         buf.put(self.public_key.to_bytes());
-        buf.put(self.price.to_bytes()?);
+        buf.put(self.price.to_bytes());
         Ok(buf.to_vec())
     }
 
@@ -80,7 +80,7 @@ impl YPingRes {
         b.extend_from_slice(buf);
         let method = BigEndian::read_u32(b.get(0..4).unwrap()).into();
         let public_key = YPublicKey::from_bytes(b.get(4..68).unwrap())?;
-        let price = YAmount::from_bytes(b.get(68..).unwrap())?;
+        let price = YAmount::from_bytes(b.get(68..).unwrap());
         let ping_res = YPingRes {
             method: method,
             public_key: public_key,

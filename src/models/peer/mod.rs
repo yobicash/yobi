@@ -7,7 +7,7 @@ use models::bucket::*;
 use network::address::*;
 use errors::*;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct YPeer {
     pub address: YAddress,
     pub last_time: YTime,

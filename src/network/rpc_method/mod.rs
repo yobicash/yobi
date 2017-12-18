@@ -2,7 +2,7 @@ use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use std::convert::From;
 use errors::*;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum YRPCMethod {
     Ping=0,
     ListPeers=1,

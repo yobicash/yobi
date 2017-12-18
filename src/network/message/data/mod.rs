@@ -4,7 +4,7 @@ use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use network::rpc_method::YRPCMethod;
 use errors::*;
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YListDataReq {
     pub method: YRPCMethod,
     pub tx_id: YDigest64,
@@ -50,7 +50,7 @@ impl YListDataReq {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Default, Debug)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Serialize, Deserialize)]
 pub struct YListDataRes {
     pub method: YRPCMethod,
     pub count: u32,
@@ -114,7 +114,7 @@ impl YListDataRes {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YGetDataReq {
     pub method: YRPCMethod,
     pub checksum: YDigest64,
@@ -160,7 +160,7 @@ impl YGetDataReq {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Default, Debug)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Serialize, Deserialize)]
 pub struct YGetDataRes {
     pub method: YRPCMethod,
     pub data: YData,

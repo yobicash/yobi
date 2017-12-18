@@ -2,7 +2,7 @@ use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use network::rpc_method::YRPCMethod;
 use errors::*;
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YHErrorRes {
     pub method: YRPCMethod,
     pub message: String,

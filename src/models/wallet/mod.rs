@@ -8,7 +8,7 @@ use models::bucket::*;
 use models::coin::*;
 use errors::*;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct YWallet {
     pub name: String,
     pub balance: YAmount,
@@ -48,7 +48,7 @@ impl YWallet {
         let name_buf = self.name.as_bytes();
         buf.put_u32::<BigEndian>(name_buf.len() as u32);
         buf.put(name_buf);
-        let balance_buf = self.balance.to_bytes()?;
+        let balance_buf = self.balance.to_bytes();
         buf.put_u32::<BigEndian>(balance_buf.len() as u32);
         buf.put(balance_buf);
         let scoins_len = self.scoins.len();
@@ -81,7 +81,7 @@ impl YWallet {
         let name = String::from_utf8_lossy(b.get(4..i).unwrap()).into();
         let balance_size = BigEndian::read_u32(b.get(i..4+i).unwrap()) as usize;
         let j = 4 + i + balance_size;
-        let balance = YAmount::from_bytes(b.get(4+i..j).unwrap())?;
+        let balance = YAmount::from_bytes(b.get(4+i..j).unwrap());
         let scoins_len = BigEndian::read_u32(b.get(j..4+j).unwrap()) as usize;
         let mut scoins = Vec::new();
         for k in 0..scoins_len {

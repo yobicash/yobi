@@ -6,10 +6,10 @@ use libyobicash::amount::YAmount;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use errors::*;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum YCoinKind {
-    Coinbase,
-    Transaction,
+    Coinbase=0,
+    Transaction=1,
 }
 
 impl YCoinKind {
@@ -50,7 +50,7 @@ impl From<u32> for YCoinKind {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct YCoin {
     pub date: YTime,
     pub sk: YSecretKey,
@@ -95,7 +95,7 @@ impl YCoin {
         buf.put(self.kind.to_bytes());
         buf.put(self.id.to_bytes());
         buf.put_u32::<BigEndian>(self.idx);
-        buf.put(self.amount.to_bytes()?);
+        buf.put(self.amount.to_bytes());
         Ok(buf.to_vec())
     }
 
@@ -110,7 +110,7 @@ impl YCoin {
         let kind = YCoinKind::from_bytes(b.get(72..76).unwrap())?;
         let id = YDigest64::from_bytes(b.get(76..140).unwrap())?;
         let idx = BigEndian::read_u32(b.get(140..144).unwrap());
-        let amount = YAmount::from_bytes(b.get(144..).unwrap())?;
+        let amount = YAmount::from_bytes(b.get(144..).unwrap());
         let coin = YCoin {
             date: date,
             sk: sk,

@@ -4,7 +4,7 @@ use store::common::*;
 use models::bucket::*;
 use errors::*;
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
 pub struct YCoinbase(pub LibCoinbase);
 
 impl YCoinbase {

@@ -1,7 +1,7 @@
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use errors::*;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct YAddress {
     pub host: [u8; 4],
     pub port: u16,
