@@ -3,6 +3,7 @@ use libyobicash::utils::time::YTime;
 use libyobicash::utils::random::YRandom;
 use serde_json;
 use bytes::{BytesMut, BufMut, BigEndian};
+use std::net::Ipv4Addr;
 use store::common::*;
 use models::bucket::*;
 use network::host::*;
@@ -91,10 +92,10 @@ impl YPeer {
         YPeer::from_bytes(value)
     }
 
-    pub fn lookup_by_ip<S: YStorage>(store: &S, ip: [u8; 4]) -> YHResult<bool> {
+    pub fn lookup_by_ip<S: YStorage>(store: &S, ip: Ipv4Addr) -> YHResult<bool> {
         let store_buck = YBucket::PeersByIp.to_store_buck();
         let mut key = Vec::new();
-        key.put(&ip[..]);
+        key.put(&ip.octets()[..]);
         store.lookup(&store_buck, &key)
     }
 
@@ -127,22 +128,23 @@ impl YPeer {
         Ok(peers)
     }
 
-    pub fn list_by_last_time<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<[u8; 4]>> {
+    pub fn list_by_last_time<S: YStorage>(store: &S, skip: u32, count: u32) -> YHResult<Vec<Ipv4Addr>> {
         let store_buck = YBucket::PeersByLastTime.to_store_buck();
         let _keys = store.list_reverse(&store_buck, skip, count)?;
-        let mut keys: Vec<[u8; 4]> = Vec::new();        
+        let mut keys: Vec<Ipv4Addr> = Vec::new();        
         for _key in _keys {
-            let key_buf = store.get(&store_buck, &_key)?.key;
-            let key = [key_buf[0], key_buf[1], key_buf[2], key_buf[3]];
+            let octets_buf = store.get(&store_buck, &_key)?.key;
+            let octets = [octets_buf[0], octets_buf[1], octets_buf[2], octets_buf[3]];
+            let key = Ipv4Addr::from(octets);
             keys.push(key);
         }
         Ok(keys)
     }
 
-    pub fn get<S: YStorage>(store: &S, ip: [u8; 4]) -> YHResult<YPeer> {
+    pub fn get<S: YStorage>(store: &S, ip: Ipv4Addr) -> YHResult<YPeer> {
         let store_buck = YBucket::PeersByLastTime.to_store_buck();
         let mut key = Vec::new();
-        key.put(&ip[..]);
+        key.put(&ip.octets()[..]);
         let item = store.get(&store_buck, &key)?;
         YPeer::from_value(&item.value)
     }

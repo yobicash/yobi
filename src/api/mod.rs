@@ -1,8 +1,11 @@
+use libyobicash::utils::time::YTime;
+use std::net::Ipv4Addr;
 use errors::*;
 use version::*;
 use store::*;
-use models::*;
+use network::host::YHost;
 use config::*;
+use models::*;
 
 pub struct YAPIStore<M, P: YStorage> {
     pub memory: M,
@@ -84,28 +87,37 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         Ok(())
     }
 
-    pub fn info() {
-        unreachable!()
+    pub fn put_peer(&mut self, host: YHost) -> YHResult<()> {
+        let peer = YPeer::new(host);
+        if !YPeer::lookup_by_ip(&self.store.persistent, host.address)? {
+            peer.create(&mut self.store.persistent)?;
+        } else {
+            peer.update(&mut self.store.persistent)?;
+        }
+        Ok(())
     }
 
-    pub fn put_peer() {
-        unreachable!()
+    pub fn list_peers(&self, skip: u32, count: u32) -> YHResult<Vec<YPeer>> {
+        YPeer::list_by_ip(&self.store.persistent, skip, count)
     }
 
-    pub fn list_peers() {
-        unreachable!()
+    pub fn get_peer(&self, ip: Ipv4Addr) -> YHResult<YPeer> {
+        YPeer::get(&self.store.persistent, ip)
     }
 
-    pub fn get_peer() {
-        unreachable!()
+    pub fn delete_peer(&mut self, host: YHost) -> YHResult<()> {
+        let peer = YPeer::new(host);
+        peer.delete(&mut self.store.persistent)
     }
 
-    pub fn delete_peer() {
-        unreachable!()
-    }
-
-    pub fn cleanup_peers() {
-        unreachable!()
+    pub fn cleanup_peers(&mut self, limit_time: YTime) -> YHResult<()> {
+        let count = YPeer::count_by_ip(&self.store.persistent)?;
+        for peer in  self.list_peers(0, count)? {
+            if peer.last_time < limit_time {
+                peer.delete(&mut self.store.persistent)?;
+            }
+        }
+        Ok(())
     }
 
     pub fn create_wallet() {
@@ -168,11 +180,6 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         unreachable!()
     }
 
-    // TODO: add a method for rpc (maybe also via ipc, or smtg)
-    pub fn mine() {
-        unreachable!()
-    }
-
     pub fn confirm_tx() {
         unreachable!()
     }
@@ -182,6 +189,15 @@ impl YAPI<YMemoryStore, YPersistentStore> {
     }
 
     pub fn list_coinbases() {
+        unreachable!()
+    }
+
+    // TODO: add a method for rpc (maybe also via ipc, or smtg)
+    pub fn mine() {
+        unreachable!()
+    }
+
+    pub fn info() {
         unreachable!()
     }
 }
