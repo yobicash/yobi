@@ -23,6 +23,14 @@ error_chain! {
     InvalidLength {
         description("Invalid length")
     }
+
+    InvalidValue {
+        description("Invalid value") 
+    }
+
+    UnknownValue {
+        description("Unknown value")
+    }
     
     NotFound {
         description("Not found")
@@ -38,6 +46,10 @@ error_chain! {
 
     InvalidCoinKind {
         description("Invalid coin kind")
+    }
+
+    InvalidCoin {
+        description("Invalid coin")
     }
 
     InvalidRPCMethod {

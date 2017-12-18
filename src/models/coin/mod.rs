@@ -2,6 +2,7 @@ use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::utils::time::YTime;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::elliptic::keys::YSecretKey;
+use libyobicash::crypto::mac::YMACCode;
 use libyobicash::amount::YAmount;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use serde_json;
@@ -58,6 +59,8 @@ pub struct YCoin {
     pub kind: YCoinKind,
     pub id: YDigest64,
     pub idx: u32,
+    pub has_data: bool,
+    pub tag: Option<YMACCode>,
     pub amount: YAmount,
 }
 
@@ -68,6 +71,8 @@ impl YCoin {
             kind: YCoinKind,
             id: YDigest64,
             idx: u32,
+            has_data: bool,
+            tag: Option<YMACCode>,
             amount: &YAmount) -> YHResult<YCoin> {
         if date > YTime::now() {
             return Err(YHErrorKind::Lib(LibErrorKind::InvalidTime).into());
@@ -78,6 +83,8 @@ impl YCoin {
             kind: kind,
             id: id,
             idx: idx,
+            has_data: has_data,
+            tag: tag,
             amount: amount.clone(),
         })
     }
@@ -85,6 +92,9 @@ impl YCoin {
     pub fn check(&self) -> YHResult<()> {
         if self.date > YTime::now() {
             return Err(YHErrorKind::Lib(LibErrorKind::InvalidTime).into());
+        }
+        if self.has_data && self.tag.is_none() {
+            return Err(YHErrorKind::InvalidCoin.into());
         }
         Ok(())
     }
@@ -96,6 +106,13 @@ impl YCoin {
         buf.put(self.kind.to_bytes());
         buf.put(self.id.to_bytes());
         buf.put_u32::<BigEndian>(self.idx);
+        buf.put_u32::<BigEndian>(self.has_data as u32);
+        if let Some(tag) = self.tag {
+            buf.put_u32::<BigEndian>(1);
+            buf.put(tag.to_bytes());
+        } else {
+            buf.put_u32::<BigEndian>(0);
+        }
         buf.put(self.amount.to_bytes());
         Ok(buf.to_vec())
     }
@@ -111,13 +128,33 @@ impl YCoin {
         let kind = YCoinKind::from_bytes(b.get(72..76).unwrap())?;
         let id = YDigest64::from_bytes(b.get(76..140).unwrap())?;
         let idx = BigEndian::read_u32(b.get(140..144).unwrap());
-        let amount = YAmount::from_bytes(b.get(144..).unwrap());
+        let has_data_n = BigEndian::read_u32(b.get(144..148).unwrap());
+        let mut has_data = false;
+        if has_data_n == 1 {
+            has_data = true;
+        } else if has_data_n != 0 {
+            return Err(YHErrorKind::InvalidValue.into());
+        };
+        let has_tag = BigEndian::read_u32(b.get(148..152).unwrap());
+        let mut tag = None;
+        match has_tag {
+            0 => {},
+            1 => {
+                tag = Some(YMACCode::from_bytes(b.get(152..184).unwrap())?);
+            },
+            _ => {
+                return Err(YHErrorKind::InvalidValue.into());
+            },
+        }
+        let amount = YAmount::from_bytes(b.get(184..).unwrap());
         let coin = YCoin {
             date: date,
             sk: sk,
             kind: kind,
             id: id,
             idx: idx,
+            has_data: has_data,
+            tag: tag,
             amount: amount,
         };
         coin.check()?;

@@ -1,3 +1,5 @@
+#![recursion_limit="1024"]
+
 #![feature(custom_attribute)]
 extern crate libyobicash;
 #[macro_use]
