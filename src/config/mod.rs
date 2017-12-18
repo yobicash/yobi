@@ -2,8 +2,10 @@ use libyobicash::utils::random::YRandom;
 use libyobicash::crypto::hash::sha::YSHA512;
 use serde_json;
 use std::env::home_dir;
-use std::fs::create_dir_all;
-use std::path::Path;
+use std::fs::{create_dir_all, OpenOptions};
+use std::path::{Path, PathBuf};
+use std::io::BufReader;
+use std::io::prelude::*;
 use std::convert::AsRef;
 use network::host::YHost;
 use errors::*;
@@ -131,11 +133,34 @@ impl YConfig {
         Ok(config)
     }
 
-    pub fn read(path: Option<String>) -> YHResult<YConfig> {
-        unreachable!()
+    pub fn path(home: Option<String>) -> YHResult<String> {
+        let mut path = PathBuf::new();
+        path.push(&home.unwrap_or(YConfigDir::home()?));
+        path.push("config.json");
+        let path_str = path
+            .to_str()
+            .unwrap()
+            .to_string();
+        Ok(path_str)
     }
 
-    pub fn write(&self, path: Option<String>) -> YHResult<()> {
-        unreachable!()
+    pub fn read(home: Option<String>) -> YHResult<YConfig> {
+        let file = OpenOptions::new()
+            .read(true)
+            .open(YConfig::path(home)?)?;
+        let mut json = String::new();
+        let mut reader = BufReader::new(file);
+        reader.read_to_string(&mut json)?;
+        YConfig::from_json(&json)
+    }
+
+    pub fn write(&self, home: Option<String>) -> YHResult<()> {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(YConfig::path(home)?)?;
+        file.write_all(self.to_json()?.as_bytes())?;
+        Ok(())
     }
 }
