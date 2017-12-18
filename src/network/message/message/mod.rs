@@ -195,12 +195,14 @@ impl YMessage {
     }
 
     pub fn to_json(&self) -> YHResult<String> {
+        self.check()?;
         let json = serde_json::to_string(self)?;
         Ok(json)
     }
 
     pub fn from_json(s: &str) -> YHResult<YMessage> {
-        let msg = serde_json::from_str(s)?;
+        let msg: YMessage = serde_json::from_str(s)?;
+        msg.check()?;
         Ok(msg)
     }
 }
