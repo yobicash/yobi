@@ -1,6 +1,7 @@
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::mac::YMACCode;
 use libyobicash::data::YData as LibData;
+use serde_json;
 use bytes::BufMut;
 use store::common::*;
 use models::bucket::*;
@@ -27,6 +28,16 @@ impl YData {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YData> {
         Ok(YData(LibData::from_bytes(buf)?))
+    }
+
+    pub fn to_json(&self) -> YHResult<String> {
+        let json = serde_json::to_string(self)?;
+        Ok(json)
+    }
+
+    pub fn from_json(s: &str) -> YHResult<YData> {
+        let data = serde_json::from_str(s)?;
+        Ok(data)
     }
 
     pub fn key(&self) -> YHResult<YStoreKey> {

@@ -1,28 +1,29 @@
 use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::utils::time::YTime;
 use libyobicash::utils::random::YRandom;
+use serde_json;
 use bytes::{BytesMut, BufMut, BigEndian};
 use store::common::*;
 use models::bucket::*;
-use network::address::*;
+use network::host::*;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct YPeer {
-    pub address: YAddress,
+    pub host: YHost,
     pub last_time: YTime,
 }
 
 impl Default for YPeer {
     fn default() -> YPeer {
-        YPeer::new(YAddress::default())
+        YPeer::new(YHost::default())
     }
 }
 
 impl YPeer {
-    pub fn new(addr: YAddress) -> YPeer {
+    pub fn new(host: YHost) -> YPeer {
         YPeer {
-            address: addr,
+            host: host,
             last_time: YTime::now(),
         }
     }
@@ -36,7 +37,7 @@ impl YPeer {
 
     pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         let mut buf = BytesMut::new();
-        buf.put(&self.address.to_bytes());
+        buf.put(&self.host.to_bytes());
         buf.put(&self.last_time.to_bytes()[..]);
         Ok(buf.to_vec())
     }
@@ -47,20 +48,30 @@ impl YPeer {
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let address = YAddress::from_bytes(b.get(0..6).unwrap())?;
+        let host = YHost::from_bytes(b.get(0..6).unwrap())?;
         let last_time = YTime::from_bytes(b.get(6..).unwrap())?;
         let peer = YPeer {
-            address: address,
+            host: host,
             last_time: last_time,
         };
         peer.check()?;
         Ok(peer)
     }
 
+    pub fn to_json(&self) -> YHResult<String> {
+        let json = serde_json::to_string(self)?;
+        Ok(json)
+    }
+
+    pub fn from_json(s: &str) -> YHResult<YPeer> {
+        let peer = serde_json::from_str(s)?;
+        Ok(peer)
+    }
+
     pub fn by_ip_key(&self) -> YHResult<YStoreKey> {
         self.check()?;
         let mut key = Vec::new();
-        key.put(&self.address.host[..]);
+        key.put(&self.host.address.octets()[..]);
         Ok(key)
     }
 

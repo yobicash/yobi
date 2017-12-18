@@ -4,6 +4,7 @@ use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::elliptic::keys::YSecretKey;
 use libyobicash::amount::YAmount;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
+use serde_json;
 use errors::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
@@ -120,6 +121,16 @@ impl YCoin {
             amount: amount,
         };
         coin.check()?;
+        Ok(coin)
+    }
+
+    pub fn to_json(&self) -> YHResult<String> {
+        let json = serde_json::to_string(self)?;
+        Ok(json)
+    }
+
+    pub fn from_json(s: &str) -> YHResult<YCoin> {
+        let coin = serde_json::from_str(s)?;
         Ok(coin)
     }
 }

@@ -1,6 +1,7 @@
 use libyobicash::errors::YError as LibError;
 use libyobicash::errors::YErrorKind as LibErrorKind;
 use unqlite::Error as UnQLiteError;
+use serde_json::Error as JSONError;
 use std::io::Error as IOError;
 
 error_chain! {
@@ -15,6 +16,7 @@ error_chain! {
   foreign_links {
     IO(IOError);
     Store(UnQLiteError);
+    JSON(JSONError);
   }
 
   errors {

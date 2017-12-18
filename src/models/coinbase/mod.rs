@@ -1,5 +1,6 @@
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::coinbase::YCoinbase as LibCoinbase;
+use serde_json;
 use store::common::*;
 use models::bucket::*;
 use errors::*;
@@ -25,6 +26,16 @@ impl YCoinbase {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YCoinbase> {
         Ok(YCoinbase(LibCoinbase::from_bytes(buf)?))
+    }
+
+    pub fn to_json(&self) -> YHResult<String> {
+        let json = serde_json::to_string(self)?;
+        Ok(json)
+    }
+
+    pub fn from_json(s: &str) -> YHResult<YCoinbase> {
+        let coinbase = serde_json::from_str(s)?;
+        Ok(coinbase)
     }
 
     pub fn key(&self) -> YHResult<Vec<u8>> {

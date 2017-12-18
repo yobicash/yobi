@@ -1,5 +1,6 @@
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::transaction::YTransaction as LibTransaction;
+use serde_json;
 use store::common::*;
 use models::bucket::*;
 use errors::*;
@@ -27,6 +28,16 @@ impl YTransaction {
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YTransaction> {
         Ok(YTransaction(LibTransaction::from_bytes(buf)?))
+    }
+
+    pub fn to_json(&self) -> YHResult<String> {
+        let json = serde_json::to_string(self)?;
+        Ok(json)
+    }
+
+    pub fn from_json(s: &str) -> YHResult<YTransaction> {
+        let tx = serde_json::from_str(s)?;
+        Ok(tx)
     }
 
     pub fn key(&self) -> YHResult<Vec<u8>> {

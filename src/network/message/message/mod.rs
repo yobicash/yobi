@@ -5,6 +5,7 @@ use libyobicash::utils::version::*;
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::hash::sha::YSHA512;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
+use serde_json;
 use std::convert::From;
 use network::rpc_method::*;
 use version::*;
@@ -190,6 +191,16 @@ impl YMessage {
             payload: payload,
         };
         msg.check()?;
+        Ok(msg)
+    }
+
+    pub fn to_json(&self) -> YHResult<String> {
+        let json = serde_json::to_string(self)?;
+        Ok(json)
+    }
+
+    pub fn from_json(s: &str) -> YHResult<YMessage> {
+        let msg = serde_json::from_str(s)?;
         Ok(msg)
     }
 }

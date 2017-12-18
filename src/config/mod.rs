@@ -1,10 +1,11 @@
 use libyobicash::utils::random::YRandom;
 use libyobicash::crypto::hash::sha::YSHA512;
+use serde_json;
 use std::env::home_dir;
 use std::fs::create_dir_all;
 use std::path::Path;
 use std::convert::AsRef;
-use network::address::YAddress;
+use network::host::YHost;
 use errors::*;
 
 pub struct YConfigDir;
@@ -69,8 +70,8 @@ impl YConfigDir {
 pub struct YConfig {
     pub password: String,
     pub db_path: String,
-    pub seed: Vec<YAddress>,
-    pub local: YAddress,
+    pub seed: Vec<YHost>,
+    pub local: YHost,
     pub price: u64,
 }
 
@@ -87,7 +88,7 @@ impl Default for YConfig {
 }
 
 impl YConfig {
-    pub fn new(pswd: &str, db_path: &str, seed: &Vec<YAddress>, local: YAddress, price: u64) -> YHResult<YConfig> {
+    pub fn new(pswd: &str, db_path: &str, seed: &Vec<YHost>, local: YHost, price: u64) -> YHResult<YConfig> {
         if pswd.len() < 16 {
             return Err(YHErrorKind::InvalidLength.into());
         }
@@ -108,16 +109,26 @@ impl YConfig {
         YConfigDir::subdir("store")
     }
 
-    pub fn default_seed() -> Vec<YAddress> {
+    pub fn default_seed() -> Vec<YHost> {
         vec![YConfig::default_local()]
     }
 
-    pub fn default_local() -> YAddress {
-        YAddress::default()
+    pub fn default_local() -> YHost {
+        YHost::default()
     }
 
     pub fn default_price() -> u64 {
         0
+    }
+
+    pub fn to_json(&self) -> YHResult<String> {
+        let json = serde_json::to_string(self)?;
+        Ok(json)
+    }
+
+    pub fn from_json(s: &str) -> YHResult<YConfig> {
+        let config = serde_json::from_str(s)?;
+        Ok(config)
     }
 
     pub fn read(path: Option<String>) -> YHResult<YConfig> {

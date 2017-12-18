@@ -2,6 +2,7 @@ use libyobicash::errors::YErrorKind as LibErrorKind;
 use libyobicash::amount::YAmount;
 use libyobicash::crypto::key::YKey32;
 use libyobicash::crypto::encryption::symmetric::YSymmetricEncryption as YSE;
+use serde_json;
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use store::common::*;
 use models::bucket::*;
@@ -105,6 +106,16 @@ impl YWallet {
             ucoins: ucoins,
         };
         wallet.check()?;
+        Ok(wallet)
+    }
+
+    pub fn to_json(&self) -> YHResult<String> {
+        let json = serde_json::to_string(self)?;
+        Ok(json)
+    }
+
+    pub fn from_json(s: &str) -> YHResult<YWallet> {
+        let wallet = serde_json::from_str(s)?;
         Ok(wallet)
     }
 
