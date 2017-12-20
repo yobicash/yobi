@@ -10,6 +10,7 @@ use store::*;
 use network::host::YHost;
 use config::*;
 use models::*;
+use info::*;
 
 pub struct YAPIStore<M, P: YStorage> {
     pub memory: M,
@@ -91,6 +92,25 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         Ok(())
     }
 
+    pub fn check_password(&self, pswd: &str) -> YHResult<()> {
+        if pswd.to_string() != self.config.password {
+            return Err(YHErrorKind::InvalidPassword.into());
+        }
+        Ok(())
+    }
+
+    pub fn get_key(&self) -> YKey32 {
+        let pswd_seed = self.config.password.as_bytes();
+        YKey32(YSHA256::hash(&pswd_seed).0)
+    }
+
+    pub fn check_key(&self, key: YKey32) -> YHResult<()> {
+        if key != self.get_key() {
+            return Err(YHErrorKind::InvalidKey.into());
+        }
+        Ok(())
+    }
+
     pub fn put_peer(&mut self, host: YHost) -> YHResult<()> {
         let peer = YPeer::new(host);
         if !YPeer::lookup_by_ip(&self.store.persistent, host.address)? {
@@ -125,21 +145,18 @@ impl YAPI<YMemoryStore, YPersistentStore> {
     }
 
     pub fn create_wallet(&mut self, name: &str) -> YHResult<()> {
+        let key = self.get_key();
         let wallet = YWallet::new(name);
-        let pswd_seed = self.config.password.as_bytes();
-        let key = YKey32(YSHA256::hash(&pswd_seed).0);
         wallet.create(&mut self.store.persistent, key)
     }
 
     pub fn list_wallets(&self, skip: u32, count: u32) -> YHResult<Vec<YWallet>> {
-        let pswd_seed = self.config.password.as_bytes();
-        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        let key = self.get_key();
         YWallet::list(&self.store.persistent, key, skip, count)
     }
 
     pub fn get_wallet(&self, name: &str) -> YHResult<YWallet> {
-        let pswd_seed = self.config.password.as_bytes();
-        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        let key = self.get_key();
         YWallet::get(&self.store.persistent, key, name)
     }
 
@@ -220,8 +237,7 @@ impl YAPI<YMemoryStore, YPersistentStore> {
     }
 
     pub fn confirm_transaction(&mut self, wallet: &str, id: YDigest64, incr: u32, fee_pk: YPublicKey) -> YHResult<(bool, Option<YCoinbase>)> {
-        let pswd_seed = self.config.password.as_bytes();
-        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        let key = self.get_key();
         YTransaction::confirm(&mut self.store.persistent, key, wallet, id, incr, fee_pk)
     }
 
@@ -231,8 +247,7 @@ impl YAPI<YMemoryStore, YPersistentStore> {
 
     pub fn confirm_coinbase(&mut self, wallet: &str, id: YDigest64, incr: u32, fee_pk: YPublicKey)
             -> YHResult<(bool, Option<(YCoinbase, YTransaction)>)> {
-        let pswd_seed = self.config.password.as_bytes();
-        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        let key = self.get_key();
         YCoinbase::confirm(&mut self.store.persistent, key, wallet, id, incr, fee_pk)
     }
 
@@ -253,18 +268,17 @@ impl YAPI<YMemoryStore, YPersistentStore> {
     }
 
     pub fn mine(&mut self, wallet: &str, id: YDigest64, incr: u32, fee_pk: YPublicKey) -> YHResult<(YCoinbase, u32)> {
-        let pswd_seed = self.config.password.as_bytes();
-        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        let key = self.get_key();
         YCoinbase::mine(&mut self.store.persistent, key, wallet, id, incr, fee_pk)
     }
 
     pub fn mine_genesys(&mut self, wallet: &str, incr: u32, fee_pk: YPublicKey) -> YHResult<((YCoinbase, YTransaction), u32)> {
-        let pswd_seed = self.config.password.as_bytes();
-        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        let key = self.get_key();
         YCoinbase::mine_genesys(&mut self.store.persistent, key, wallet, incr, fee_pk)
     }
 
-    pub fn info() {
-        unreachable!()
+    pub fn info(&self) -> YHResult<YInfo> {
+        let key = self.get_key();
+        YInfo::get(&self.store.persistent, self.config.clone(), key)
     }
 }

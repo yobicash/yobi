@@ -20,6 +20,14 @@ error_chain! {
   }
 
   errors {
+    InvalidPassword {
+        description("Invalid password")
+    }
+
+    InvalidKey {
+        description("Invalid key")
+    }
+
     InvalidLength {
         description("Invalid length")
     }

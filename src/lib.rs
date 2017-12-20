@@ -24,6 +24,7 @@ pub mod version;
 pub mod store;
 pub mod models;
 pub mod config;
+pub mod info;
 pub mod api;
 pub mod network;
 pub mod cli;
