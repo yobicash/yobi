@@ -1,4 +1,6 @@
 use libyobicash::crypto::hash::digest::YDigest64;
+use libyobicash::crypto::key::YKey32;
+use libyobicash::crypto::elliptic::keys::YPublicKey;
 use libyobicash::transaction::YTransaction as LibTransaction;
 use serde_json;
 use store::common::*;
@@ -82,18 +84,14 @@ impl YTransaction {
         Ok(transactions)
     }
 
-    pub fn list_ancestors<S: YStorage>(store: &S, id: YDigest64, level: u32)
-            -> YHResult<(Vec<YTransaction>, Vec<YCoinbase>)> {
-        let start_tx = YTransaction::get(store, id)?.internal();
-        if start_tx.outputs[0].height < level + 1 {
-            return Err(YHErrorKind::InvalidLevel.into());
-        }
-        let mut inputs = YTransaction::get(store, id)?.internal().inputs;
+    pub fn list_ancestors<S: YStorage>(&self, store: &S) -> YHResult<(Vec<YTransaction>, Vec<YCoinbase>)> {
+        let descendant_tx = self.internal();
+        let mut height = descendant_tx.outputs[0].height;
+        let mut inputs = descendant_tx.inputs;
         let mut ancestor_tx_ids = Vec::new();
         let mut ancestor_txs = Vec::new();
         let mut ancestor_cb_ids = Vec::new();
         let mut ancestor_cbs = Vec::new();
-        let mut height = level;
         while height > 0 {
             let mut prev_inputs = Vec::new();
             for input in inputs {
@@ -116,6 +114,53 @@ impl YTransaction {
             height -= 1;
         }
         Ok((ancestor_txs, ancestor_cbs))
+    }
+
+    pub fn count_ancestors<S: YStorage>(store: &S, id: YDigest64)
+            -> YHResult<(u32, u32)> {
+        let start_tx = YTransaction::get(store, id)?.internal();
+        let mut height = start_tx.outputs[0].height;
+        let mut inputs = YTransaction::get(store, id)?.internal().inputs;
+        let mut ancestor_tx_ids = Vec::new();
+        let mut ancestor_txs_count = 0;
+        let mut ancestor_cb_ids = Vec::new();
+        let mut ancestor_cbs_count = 0;
+        while height > 0 {
+            let mut prev_inputs = Vec::new();
+            for input in inputs {
+                let id = input.id;
+                if input.height != 0 {
+                    if !ancestor_tx_ids.contains(&id) {
+                        ancestor_tx_ids.push(id);
+                        let tx = YTransaction::get(store, id)?;
+                        prev_inputs.extend(tx.internal().inputs.clone());
+                        ancestor_txs_count += 1;
+                    }
+                } else {
+                    if !ancestor_cb_ids.contains(&id) {
+                        ancestor_cb_ids.push(id);
+                        ancestor_cbs_count += 1;
+                    }
+                }
+            }
+            inputs = prev_inputs.clone();
+            height -= 1;
+        }
+        Ok((ancestor_txs_count, ancestor_cbs_count))
+    }
+
+    pub fn confirm<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, id: YDigest64, incr: u32, fee_pk: YPublicKey)
+            -> YHResult<(bool, Option<YCoinbase>)> {
+        match YTransaction::get(store, id) {
+            Ok(_) => {
+                let (cb, _) = YCoinbase::mine(store, key, wallet_name, id, incr, fee_pk)?;
+                Ok((true, Some(cb)))
+            },
+            Err(YHError(YHErrorKind::NotFound, _)) => {
+                Ok((false, None))
+            },
+            Err(err) => Err(err),
+        }
     }
 
     pub fn get<S: YStorage>(store: &S, id: YDigest64) -> YHResult<YTransaction> {

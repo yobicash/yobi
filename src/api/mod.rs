@@ -3,6 +3,7 @@ use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::hash::sha::YSHA256;
 use libyobicash::crypto::mac::YMACCode;
 use libyobicash::crypto::key::YKey32;
+use libyobicash::crypto::elliptic::keys::YPublicKey;
 use std::net::Ipv4Addr;
 use errors::*;
 use store::*;
@@ -209,20 +210,30 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         Ok(transactions)
     }
 
-    pub fn list_transaction_ancestors(&self, id: YDigest64, level: u32) -> YHResult<(Vec<YTransaction>, Vec<YCoinbase>)>{
-        YTransaction::list_ancestors(&self.store.persistent, id, level)
+    pub fn list_transaction_ancestors(&self, id: YDigest64) -> YHResult<(Vec<YTransaction>, Vec<YCoinbase>)>{
+        let tx = self.get_transaction(id)?;
+        tx.list_ancestors(&self.store.persistent)
     }
 
     pub fn get_transaction(&self, id: YDigest64) -> YHResult<YTransaction> {
         YTransaction::get(&self.store.persistent, id)
     }
 
-    pub fn confirm_transaction() {
-        unreachable!()
+    pub fn confirm_transaction(&mut self, wallet: &str, id: YDigest64, incr: u32, fee_pk: YPublicKey) -> YHResult<(bool, Option<YCoinbase>)> {
+        let pswd_seed = self.config.password.as_bytes();
+        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        YTransaction::confirm(&mut self.store.persistent, key, wallet, id, incr, fee_pk)
     }
 
     pub fn get_coinbase(&self, id: YDigest64) -> YHResult<YCoinbase> {
         YCoinbase::get(&self.store.persistent, id)
+    }
+
+    pub fn confirm_coinbase(&mut self, wallet: &str, id: YDigest64, incr: u32, fee_pk: YPublicKey)
+            -> YHResult<(bool, Option<(YCoinbase, YTransaction)>)> {
+        let pswd_seed = self.config.password.as_bytes();
+        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        YCoinbase::confirm(&mut self.store.persistent, key, wallet, id, incr, fee_pk)
     }
 
     pub fn list_coinbases(&self, skip: u32, count: u32) -> YHResult<Vec<YCoinbase>> {
@@ -241,10 +252,16 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         Ok(coinbases)
     }
 
-    // TODO: add a method for rpc (maybe also via ipc, or smtg)
-    pub fn mine() {
-        // NB: have to update the wallet too
-        unreachable!()
+    pub fn mine(&mut self, wallet: &str, id: YDigest64, incr: u32, fee_pk: YPublicKey) -> YHResult<(YCoinbase, u32)> {
+        let pswd_seed = self.config.password.as_bytes();
+        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        YCoinbase::mine(&mut self.store.persistent, key, wallet, id, incr, fee_pk)
+    }
+
+    pub fn mine_genesys(&mut self, wallet: &str, incr: u32, fee_pk: YPublicKey) -> YHResult<((YCoinbase, YTransaction), u32)> {
+        let pswd_seed = self.config.password.as_bytes();
+        let key = YKey32(YSHA256::hash(&pswd_seed).0);
+        YCoinbase::mine_genesys(&mut self.store.persistent, key, wallet, incr, fee_pk)
     }
 
     pub fn info() {
