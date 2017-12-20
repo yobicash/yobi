@@ -8,9 +8,11 @@ pub enum YobicashNodeOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="S", long="seed", help="Set a custom seed file path")]
-        seed: Option<String>,
+        seed_path: Option<String>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        config_path: Option<String>,
+        #[structopt(short="m", long="mine", help="Activate mining")]
+        difficulty: Option<u32>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },

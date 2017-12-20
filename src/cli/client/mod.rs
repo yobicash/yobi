@@ -8,7 +8,7 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },
@@ -19,7 +19,7 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },
@@ -30,7 +30,7 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },
@@ -41,7 +41,7 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
@@ -54,7 +54,7 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
@@ -67,7 +67,7 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
@@ -80,7 +80,7 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
@@ -93,7 +93,7 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
@@ -104,13 +104,13 @@ pub enum YobicashClientOpt {
         #[structopt(help="Set the mining difficulty")]
         difficulty: u32,
         #[structopt(short="w", long="wallet", help="Set the wallet where to mine")]
-        wallet: String,
+        name: String,
         #[structopt(short="H", long="host", help="Set a custom host")]
         host: Option<String>,
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        config: Option<String>,
+        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },
@@ -130,14 +130,14 @@ pub enum PushCommands {
     #[structopt(name="transaction", about="Create and push a Yobicash transaction", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Transaction {
         #[structopt(help="Set the hex of the transaction to send")]
-        hex: Option<String>,
+        raw: Option<String>,
         #[structopt(short="f", long="file", help="Set the path of the file with the hex of the transaction to send")]
         file: Option<String>,
     },
     #[structopt(name="coinbase", about="Create and push a Yobicash coinbase", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Coinbase {
         #[structopt(help="Set the hex of the coinbase to send")]
-        hex: Option<String>,
+        raw: Option<String>,
         #[structopt(short="f", long="file", help="Set the path of the file with the hex of the coinbase to send")]
         file: Option<String>,
     },
@@ -148,13 +148,15 @@ pub enum SendCommands {
     #[structopt(name="data", about="Create and send a Yobicash data transaction", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Data {
         #[structopt(help="Set the hex of the data to send")]
-        hex: Option<String>,
+        raw: Option<String>,
         #[structopt(short="f", long="file", help="Set the path of the file with the hex of the data to send")]
         file: Option<String>,
         #[structopt(short="t", long="to", help="Set the public key hex of the data recipient")]
         to: String,
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the coins")]
-        wallet: String,
+        name: String,
+        #[structopt(long="spend-data", help="Set if the wallet can spend data coins")]
+        spend_data: bool,
     },
     #[structopt(name="coins", about="Create and send a Yobicash coins transaction", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Coins {
@@ -163,7 +165,7 @@ pub enum SendCommands {
         #[structopt(short="t", long="to", help="Set the public key hex of the coins recipient")]
         to: String,
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the coins")]
-        wallet: String,
+        name: String,
     },
 }
 
@@ -179,12 +181,12 @@ pub enum ListCommands {
     #[structopt(name="data", about="List Yobicash data", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Data {
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the data")]
-        wallet: String,
+        name: String,
     },
     #[structopt(name="transactions", about="List a Yobicash wallet transactions", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Transactions {
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the transactions")]
-        wallet: String,
+        name: String,
     },
     #[structopt(name="ancestors", about="List a Yobicash transaction ancestors", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Ancestors {
@@ -194,22 +196,22 @@ pub enum ListCommands {
     #[structopt(name="coinbases", about="List a Yobicash wallet coinbases", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Coinbases {
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the coinbases")]
-        wallet: String,
+        name: String,
     },
     #[structopt(name="coins", about="List a Yobicash wallet coins", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Coins {
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the coins")]
-        wallet: String,
+        name: String,
     },
     #[structopt(name="scoins", about="List a Yobicash wallet spent coins", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Scoins {
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the spent coins")]
-        wallet: String,
+        name: String,
     },
     #[structopt(name="ucoins", about="List a Yobicash wallet unspent coins", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Ucoins {
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the unspent coins")]
-        wallet: String,
+        name: String,
     },
 }
 
@@ -229,21 +231,21 @@ pub enum GetCommands {
         #[structopt(long="tag", help="Set the data tag")]
         tag: Option<String>,
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the data")]
-        wallet: String,
+        name: String,
     },
     #[structopt(name="transaction", about="Get a Yobicash transaction", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Transaction {
         #[structopt(help="Set the transaction id")]
         id: String,
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the transaction")]
-        wallet: String,
+        name: String,
     },
     #[structopt(name="coinbase", about="Get a Yobicash coinbase", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Coinbase {
         #[structopt(help="Set the coinbase id")]
         id: String,
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the coinbase")]
-        wallet: String,
+        name: String,
     },
     #[structopt(name="coin", about="Get a Yobicash coin", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Coin {

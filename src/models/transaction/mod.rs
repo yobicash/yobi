@@ -1,6 +1,7 @@
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::key::YKey32;
 use libyobicash::crypto::elliptic::keys::YPublicKey;
+use libyobicash::amount::*;
 use libyobicash::transaction::YTransaction as LibTransaction;
 use serde_json;
 use store::common::*;
@@ -178,6 +179,18 @@ impl YTransaction {
         }
         let value = self.value()?;
         store.put(&store_buck, &key, &value)
+    }
+
+    pub fn create_raw<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, raw: &str) -> YHResult<YTransaction> {
+        unreachable!()
+    }
+
+    pub fn create_coins<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, to: YPublicKey, amount: YAmount) -> YHResult<YTransaction> {
+        unreachable!()
+    }
+
+    pub fn create_data<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, to: YPublicKey, buf: &[u8]) -> YHResult<YTransaction> {
+        unreachable!()
     }
 
     pub fn delete<S: YStorage>(&self, store: &mut S) -> YHResult<()> {

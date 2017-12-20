@@ -39,6 +39,10 @@ error_chain! {
     UnknownValue {
         description("Unknown value")
     }
+
+    NotEnoughFunds {
+        description("Not enough funds")
+    }
     
     NotFound {
         description("Not found")
