@@ -209,8 +209,8 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         Ok(transactions)
     }
 
-    pub fn list_transaction_ancestors() {
-        unreachable!()
+    pub fn list_transaction_ancestors(&self, id: YDigest64, level: u32) -> YHResult<(Vec<YTransaction>, Vec<YCoinbase>)>{
+        YTransaction::list_ancestors(&self.store.persistent, id, level)
     }
 
     pub fn get_transaction(&self, id: YDigest64) -> YHResult<YTransaction> {

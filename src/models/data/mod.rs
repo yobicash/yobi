@@ -16,6 +16,10 @@ impl YData {
         Ok(YData(data.clone()))
     }
 
+    pub fn internal(&self) -> LibData {
+        self.0.clone()
+    }
+
     pub fn check(&self) -> YHResult<()> {
         self.0.check()?;
         Ok(())

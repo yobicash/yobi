@@ -3,6 +3,7 @@ use libyobicash::transaction::YTransaction as LibTransaction;
 use serde_json;
 use store::common::*;
 use models::bucket::*;
+use models::coinbase::*;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
@@ -14,6 +15,10 @@ impl YTransaction {
         let tx = transaction.clone().drop_all();
         tx.check()?;
         Ok(YTransaction(tx.clone()))
+    }
+
+    pub fn internal(&self) -> LibTransaction {
+        self.0.clone()
     }
 
     pub fn check(&self) -> YHResult<()> {
@@ -75,6 +80,42 @@ impl YTransaction {
             transactions.push(cb);
         }
         Ok(transactions)
+    }
+
+    pub fn list_ancestors<S: YStorage>(store: &S, id: YDigest64, level: u32)
+            -> YHResult<(Vec<YTransaction>, Vec<YCoinbase>)> {
+        let start_tx = YTransaction::get(store, id)?.internal();
+        if start_tx.outputs[0].height < level + 1 {
+            return Err(YHErrorKind::InvalidLevel.into());
+        }
+        let mut inputs = YTransaction::get(store, id)?.internal().inputs;
+        let mut ancestor_tx_ids = Vec::new();
+        let mut ancestor_txs = Vec::new();
+        let mut ancestor_cb_ids = Vec::new();
+        let mut ancestor_cbs = Vec::new();
+        let mut height = level;
+        while height > 0 {
+            let mut prev_inputs = Vec::new();
+            for input in inputs {
+                let id = input.id;
+                if input.height != 0 {
+                    if !ancestor_tx_ids.contains(&id) {
+                        ancestor_tx_ids.push(id);
+                        let tx = YTransaction::get(store, id)?;
+                        prev_inputs.extend(tx.internal().inputs.clone());
+                        ancestor_txs.push(tx);
+                    }
+                } else {
+                    if !ancestor_cb_ids.contains(&id) {
+                        ancestor_cb_ids.push(id);
+                        ancestor_cbs.push(YCoinbase::get(store, id)?);
+                    }
+                }
+            }
+            inputs = prev_inputs.clone();
+            height -= 1;
+        }
+        Ok((ancestor_txs, ancestor_cbs))
     }
 
     pub fn get<S: YStorage>(store: &S, id: YDigest64) -> YHResult<YTransaction> {

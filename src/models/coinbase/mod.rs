@@ -14,6 +14,10 @@ impl YCoinbase {
         Ok(YCoinbase(coinbase.clone()))
     }
 
+    pub fn internal(&self) -> LibCoinbase {
+        self.0.clone()
+    }
+
     pub fn check(&self) -> YHResult<()> {
         self.0.check()?;
         Ok(())

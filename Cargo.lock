@@ -331,7 +331,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "libyobicash"
 version = "0.9.1"
-source = "git+https://github.com/yobicash/libyobicash#ae878af38caaec061ecc8ff5e3b6af838228adce"
+source = "git+https://github.com/yobicash/libyobicash#e57d5d4b925133d2b1ef0e38c0390b227d7d9dc2"
 dependencies = [
  "arrayref 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",

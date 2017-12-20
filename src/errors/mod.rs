@@ -40,6 +40,10 @@ error_chain! {
         description("Already found")
     }
 
+    InvalidLevel {
+        description("Invalid level")
+    }
+
     ParsingFailure {
         description("Parsing failure")
     }

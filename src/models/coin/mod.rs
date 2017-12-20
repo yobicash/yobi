@@ -59,6 +59,7 @@ pub struct YCoin {
     pub kind: YCoinKind,
     pub id: YDigest64,
     pub idx: u32,
+    pub height: u32,
     pub has_data: bool,
     pub tag: Option<YMACCode>,
     pub amount: YAmount,
@@ -71,6 +72,7 @@ impl YCoin {
             kind: YCoinKind,
             id: YDigest64,
             idx: u32,
+            height: u32,
             has_data: bool,
             tag: Option<YMACCode>,
             amount: &YAmount) -> YHResult<YCoin> {
@@ -83,6 +85,7 @@ impl YCoin {
             kind: kind,
             id: id,
             idx: idx,
+            height: height,
             has_data: has_data,
             tag: tag,
             amount: amount.clone(),
@@ -106,6 +109,7 @@ impl YCoin {
         buf.put(self.kind.to_bytes());
         buf.put(self.id.to_bytes());
         buf.put_u32::<BigEndian>(self.idx);
+        buf.put_u32::<BigEndian>(self.height);
         buf.put_u32::<BigEndian>(self.has_data as u32);
         if let Some(tag) = self.tag {
             buf.put_u32::<BigEndian>(1);
@@ -118,7 +122,7 @@ impl YCoin {
     }
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YCoin> {
-        if buf.len() < 145 {
+        if buf.len() < 156 {
             return Err(YHErrorKind::Lib(LibErrorKind::InvalidLength).into());
         }
         let mut b = BytesMut::new();
@@ -128,31 +132,33 @@ impl YCoin {
         let kind = YCoinKind::from_bytes(b.get(72..76).unwrap())?;
         let id = YDigest64::from_bytes(b.get(76..140).unwrap())?;
         let idx = BigEndian::read_u32(b.get(140..144).unwrap());
-        let has_data_n = BigEndian::read_u32(b.get(144..148).unwrap());
+        let height = BigEndian::read_u32(b.get(144..148).unwrap());
+        let has_data_n = BigEndian::read_u32(b.get(148..152).unwrap());
         let mut has_data = false;
         if has_data_n == 1 {
             has_data = true;
         } else if has_data_n != 0 {
             return Err(YHErrorKind::InvalidValue.into());
         };
-        let has_tag = BigEndian::read_u32(b.get(148..152).unwrap());
+        let has_tag = BigEndian::read_u32(b.get(152..156).unwrap());
         let mut tag = None;
         match has_tag {
             0 => {},
             1 => {
-                tag = Some(YMACCode::from_bytes(b.get(152..184).unwrap())?);
+                tag = Some(YMACCode::from_bytes(b.get(156..160).unwrap())?);
             },
             _ => {
                 return Err(YHErrorKind::InvalidValue.into());
             },
         }
-        let amount = YAmount::from_bytes(b.get(184..).unwrap());
+        let amount = YAmount::from_bytes(b.get(160..).unwrap());
         let coin = YCoin {
             date: date,
             sk: sk,
             kind: kind,
             id: id,
             idx: idx,
+            height: height,
             has_data: has_data,
             tag: tag,
             amount: amount,
