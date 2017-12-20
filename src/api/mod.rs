@@ -3,7 +3,7 @@ use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::hash::sha::YSHA256;
 use libyobicash::crypto::mac::YMACCode;
 use libyobicash::crypto::key::YKey32;
-use libyobicash::crypto::elliptic::keys::YPublicKey;
+use libyobicash::crypto::elliptic::keys::*;
 use libyobicash::amount::*;
 use std::net::Ipv4Addr;
 use errors::*;
@@ -197,16 +197,16 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         Ok(wallet.scoins)
     }
 
-    pub fn create_transaction(&mut self, key: YKey32, wallet: &str, raw: &str) -> YHResult<YTransaction> {
-        YTransaction::create_raw(&mut self.store.persistent, key, wallet, raw)
+    pub fn create_raw_transaction(&mut self, key: YKey32, wallet: &str, raw: &str, sks: &Vec<YSecretKey>) -> YHResult<YTransaction> {
+        YTransaction::create_raw(&mut self.store.persistent, key, wallet, raw, sks)
     }
 
-    pub fn create_coin_transaction(&mut self, key: YKey32, wallet: &str, to: YPublicKey, amount: YAmount) -> YHResult<YTransaction> {
-        YTransaction::create_coins(&mut self.store.persistent, key, wallet, to, amount)
+    pub fn create_coin_transaction(&mut self, key: YKey32, wallet: &str, to: YPublicKey, amount: YAmount, keep_data: bool) -> YHResult<YTransaction> {
+        YTransaction::create_coins(&mut self.store.persistent, key, wallet, to, amount, keep_data)
     }
 
-    pub fn create_data_transaction(&mut self, key: YKey32, wallet: &str, to: YPublicKey, buf: &[u8]) -> YHResult<YTransaction> {
-        YTransaction::create_data(&mut self.store.persistent, key, wallet, to, buf)
+    pub fn create_data_transaction(&mut self, key: YKey32, wallet: &str, to: YPublicKey, buf: &[u8], keep_data: bool) -> YHResult<YTransaction> {
+        YTransaction::create_data(&mut self.store.persistent, key, wallet, to, buf, keep_data)
     }
 
     pub fn list_transactions(&self, skip: u32, count: u32) -> YHResult<Vec<YTransaction>> {

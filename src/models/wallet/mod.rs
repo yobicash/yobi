@@ -182,14 +182,13 @@ impl YWallet {
         Ok(wallets)
     }
 
-    pub fn select_coins_no_data<S: YStorage>(store: &S, ekey: YKey32, name: &str, amount: YAmount) -> YHResult<Vec<YCoin>> {
-        let wallet = YWallet::get(store, ekey, name)?;
-        if wallet.balance < amount {
+    pub fn select_coins_no_data(&self, amount: YAmount) -> YHResult<Vec<YCoin>> {
+        if self.balance < amount {
             return Err(YHErrorKind::NotEnoughFunds.into());    
         }
         let mut coins = Vec::new();
         let mut tot_amount = YAmount::zero();
-        for ucoin in wallet.ucoins {
+        for ucoin in self.ucoins.clone() {
             if !ucoin.has_data {
                 coins.push(ucoin.clone());
                 tot_amount += ucoin.amount;
@@ -205,17 +204,16 @@ impl YWallet {
         }
     }
 
-    pub fn select_coins<S: YStorage>(store: &S, ekey: YKey32, name: &str, amount: YAmount) -> YHResult<Vec<YCoin>> {
-        let wallet = YWallet::get(store, ekey, name)?;
-        if wallet.balance < amount {
+    pub fn select_coins(&self, amount: YAmount) -> YHResult<Vec<YCoin>> {
+        if self.balance < amount {
             return Err(YHErrorKind::NotEnoughFunds.into());    
         }
-        if wallet.balance == amount {
-            return Ok(wallet.ucoins);
+        if self.balance == amount {
+            return Ok(self.ucoins.clone());
         }
         let mut coins = Vec::new();
         let mut tot_amount = YAmount::zero();
-        for ucoin in wallet.ucoins {
+        for ucoin in self.ucoins.clone() {
             coins.push(ucoin.clone());
             tot_amount += ucoin.amount;
             if tot_amount >= amount {

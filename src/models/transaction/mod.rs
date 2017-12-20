@@ -1,12 +1,16 @@
 use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::key::YKey32;
-use libyobicash::crypto::elliptic::keys::YPublicKey;
+use libyobicash::crypto::elliptic::keys::*;
 use libyobicash::amount::*;
+use libyobicash::utxo::YUTXO as LibUTXO;
 use libyobicash::transaction::YTransaction as LibTransaction;
 use serde_json;
 use store::common::*;
 use models::bucket::*;
+use models::data::*;
 use models::coinbase::*;
+use models::coin::*;
+use models::wallet::*;
 use errors::*;
 
 #[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize)]
@@ -181,16 +185,281 @@ impl YTransaction {
         store.put(&store_buck, &key, &value)
     }
 
-    pub fn create_raw<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, raw: &str) -> YHResult<YTransaction> {
-        unreachable!()
+    pub fn create_raw<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, raw: &str, _sks: &Vec<YSecretKey>) -> YHResult<YTransaction> {
+        let _tx = LibTransaction::from_hex(raw)?;
+        let date = _tx.time.clone();
+        let kind = YCoinKind::Transaction;
+        let id = _tx.id;
+        let inputs = _tx.inputs.clone();
+        let outputs = _tx.outputs.clone();
+        let height = outputs[0].height;
+
+        let mut sks = _sks.clone();
+        sks.dedup();
+            
+        if sks.len() != outputs.len() {
+            return Err(YHErrorKind::InvalidLength.into());
+        }
+
+        let mut wallet = YWallet::get(store, key, wallet_name)?;
+
+        for input in inputs {
+            let id = input.id;
+            let idx = input.idx;
+            let height = input.height;
+
+            let ucoins_len = wallet.ucoins.len();
+
+            if height != 0 {
+                let tx = YTransaction::get(store, id)?.internal();
+                let date = tx.time.clone();
+                let kind = YCoinKind::Transaction;
+                let mut found = false;
+
+                for i in 0..ucoins_len {
+                    let ucoin = wallet.ucoins[i].clone();
+                    if ucoin.date == date &&
+                        ucoin.kind == kind &&
+                        ucoin.id == id &&
+                        ucoin.idx == idx &&
+                        ucoin.height == height {
+                        wallet.ucoins.remove(i);
+                        wallet.scoins.push(ucoin);
+                        found = true;
+                    }
+                }
+                if !found {
+                    return Err(YHErrorKind::NotFound.into());
+                }
+            } else {
+                let cb = YCoinbase::get(store, id)?.internal();
+                let date = cb.time.clone();
+                let kind = YCoinKind::Coinbase;
+                let mut found = false;
+
+                for i in 0..ucoins_len {
+                    let ucoin = wallet.ucoins[i].clone();
+                    if ucoin.date == date &&
+                        ucoin.kind == kind &&
+                        ucoin.id == id &&
+                        ucoin.idx == idx &&
+                        ucoin.height == height {
+                        wallet.ucoins.remove(i);
+                        wallet.scoins.push(ucoin);
+                        found = true;
+                    }
+                }
+                if !found {
+                    return Err(YHErrorKind::NotFound.into());
+                }
+            }
+        }
+       
+        for idx in 0..outputs.len() {
+            let output = outputs[idx].clone();
+            let has_data = output.data.is_some();
+            let tag = if !has_data {
+                None
+            } else {
+                Some(output.data.clone().unwrap().tag)
+            };
+            let amount = output.amount;
+            let coin = YCoin {
+                date: date.clone(),
+                sk: sks[idx],
+                kind: kind,
+                id: id,
+                idx: idx as u32,
+                height: height,
+                has_data: has_data,
+                tag: tag,
+                amount: amount,
+            };
+            wallet.ucoins.push(coin);
+            if has_data {
+                let data = YData::new(&output.data.unwrap())?;
+                data.create(store)?;
+            }
+        }
+
+        let tx = YTransaction(_tx);
+        tx.create(store)?;
+
+        wallet.update(store, key)?;
+
+        Ok(tx)
     }
 
-    pub fn create_coins<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, to: YPublicKey, amount: YAmount) -> YHResult<YTransaction> {
-        unreachable!()
+    pub fn create_coins<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, to: YPublicKey, amount: YAmount, keep_data: bool) -> YHResult<YTransaction> {
+        let coins_sk = YSecretKey::random();
+        let change_sk = YSecretKey::random();
+        let change_pk = change_sk.to_public();
+        
+        let mut wallet = YWallet::get(store, key, wallet_name)?;
+        
+        let ucoins = if keep_data {
+            wallet.select_coins_no_data(amount.clone())?
+        } else {
+            wallet.select_coins(amount.clone())?
+        };
+       
+        let mut sks = Vec::new();
+        let mut xs = Vec::new();
+        for ucoin in ucoins.clone() {
+            sks.push(ucoin.sk);
+            xs.push(ucoin.sk.sk);
+        }
+        
+        let mut utxos = Vec::new();
+
+        for ucoin in ucoins.clone() {
+            let id = ucoin.id;
+            let idx = ucoin.idx;
+            let height = ucoin.height;
+            let recipient = ucoin.sk.to_public();
+            let amount = ucoin.amount;
+            let utxo = LibUTXO::new(id, idx, height, recipient, amount);
+            utxos.push(utxo);
+        }
+
+        let _tx = LibTransaction::new_coins(&coins_sk, &change_sk,
+                                            &to, &change_pk, amount,
+                                            &utxos, &xs,
+                                            None, None)?;
+
+        // NB: change it if the coin selection
+        //     is improved
+        for i in 0..ucoins.len() {
+            let ucoin = ucoins[i].clone();
+            wallet.ucoins.remove(i);
+            wallet.scoins.push(ucoin);
+        }
+
+        let date = _tx.time.clone();
+        let kind = YCoinKind::Transaction;
+        let id = _tx.id;
+
+        let outputs = _tx.outputs.clone();
+
+        for idx in 0..outputs.len() {
+            let output = outputs[idx].clone();
+            let has_data = output.data.is_some();
+            let tag = if !has_data {
+                None
+            } else {
+                Some(output.data.clone().unwrap().tag)
+            };
+            let height = output.height;
+            let amount = output.amount;
+            let coin = YCoin {
+                date: date.clone(),
+                sk: sks[idx],
+                kind: kind,
+                id: id,
+                idx: idx as u32,
+                height: height,
+                has_data: has_data,
+                tag: tag,
+                amount: amount,
+            };
+            wallet.ucoins.push(coin);
+        }
+
+        let tx = YTransaction(_tx);
+        tx.create(store)?;
+
+        wallet.update(store, key)?;
+
+        Ok(tx)
     }
 
-    pub fn create_data<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, to: YPublicKey, buf: &[u8]) -> YHResult<YTransaction> {
-        unreachable!()
+    pub fn create_data<S: YStorage>(store: &mut S, key: YKey32, wallet_name: &str, to: YPublicKey, buf: &[u8], keep_data: bool) -> YHResult<YTransaction> {
+        let data_sk = YSecretKey::random();
+        let change_sk = YSecretKey::random();
+        let change_pk = change_sk.to_public();
+        
+        let mut wallet = YWallet::get(store, key, wallet_name)?;
+       
+        let amount = YAmount::from_u64((buf.len()*2) as u64)?;
+
+        let ucoins = if keep_data {
+            wallet.select_coins_no_data(amount)?
+        } else {
+            wallet.select_coins(amount)?
+        };
+        
+        let mut sks = Vec::new();
+        let mut xs = Vec::new();
+        for ucoin in ucoins.clone() {
+            sks.push(ucoin.sk);
+            xs.push(ucoin.sk.sk);
+        }
+        
+        let mut utxos = Vec::new();
+
+        for ucoin in ucoins.clone() {
+            let id = ucoin.id;
+            let idx = ucoin.idx;
+            let height = ucoin.height;
+            let recipient = ucoin.sk.to_public();
+            let amount = ucoin.amount;
+            let utxo = LibUTXO::new(id, idx, height, recipient, amount);
+            utxos.push(utxo);
+        }
+        
+        let _tx = LibTransaction::new_data(&data_sk, &change_sk,
+                                           &to, &change_pk, buf,
+                                           &utxos, &xs,
+                                           None, None)?;
+
+        // NB: change it if the coin selection
+        //     is improved
+        for i in 0..ucoins.len() {
+            let ucoin = ucoins[i].clone();
+            wallet.ucoins.remove(i);
+            wallet.scoins.push(ucoin);
+        }
+
+        let date = _tx.time.clone();
+        let kind = YCoinKind::Transaction;
+        let id = _tx.id;
+
+        let outputs = _tx.outputs.clone();
+
+        for idx in 0..outputs.len() {
+            let output = outputs[idx].clone();
+            let has_data = output.data.is_some();
+            let tag = if !has_data {
+                None
+            } else {
+                Some(output.data.clone().unwrap().tag)
+            };
+            let height = output.height;
+            let amount = output.amount;
+            let coin = YCoin {
+                date: date.clone(),
+                sk: sks[idx],
+                kind: kind,
+                id: id,
+                idx: idx as u32,
+                height: height,
+                has_data: has_data,
+                tag: tag,
+                amount: amount,
+            };
+            wallet.ucoins.push(coin);
+            if has_data {
+                let data = YData::new(&output.data.unwrap())?;
+                data.create(store)?;
+            }
+        }
+
+        let tx = YTransaction(_tx);
+        tx.create(store)?;
+
+        wallet.update(store, key)?;
+
+        Ok(tx)
     }
 
     pub fn delete<S: YStorage>(&self, store: &mut S) -> YHResult<()> {
