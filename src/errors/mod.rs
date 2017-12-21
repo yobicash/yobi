@@ -2,6 +2,7 @@ use libyobicash::errors::YError as LibError;
 use libyobicash::errors::YErrorKind as LibErrorKind;
 use unqlite::Error as UnQLiteError;
 use serde_json::Error as JSONError;
+use std::string::FromUtf8Error;
 use std::io::Error as IOError;
 
 error_chain! {
@@ -17,6 +18,7 @@ error_chain! {
     IO(IOError);
     Store(UnQLiteError);
     JSON(JSONError);
+    String(FromUtf8Error);
   }
 
   errors {
@@ -69,7 +71,7 @@ error_chain! {
     }
 
     InvalidRPCMethod {
-        description("Invalid message RPCMethod")
+        description("Invalid message rpc method")
     }
 
     InvalidMessageKind {

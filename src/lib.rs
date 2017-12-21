@@ -9,6 +9,7 @@ extern crate futures;
 extern crate futures_await;
 extern crate unqlite;
 extern crate tokio_io;
+extern crate tokio_core;
 extern crate tokio_proto;
 extern crate tokio_service;
 extern crate structopt;

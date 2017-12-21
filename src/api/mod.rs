@@ -24,8 +24,8 @@ pub struct YAPI<M, P: YStorage> {
 }
 
 impl YAPI<YMemoryStore, YPersistentStore> {
-    pub fn new(home_dir: Option<String>, read_only: bool) -> YHResult<YAPI<YMemoryStore, YPersistentStore>> {
-        let config = YConfig::read(home_dir)?;
+    // TODO: parametrize new
+    pub fn new(config: YConfig, read_only: bool) -> YHResult<YAPI<YMemoryStore, YPersistentStore>> {
         let mem_config = YMemoryConfig {
             mode: YMemoryMode {
                 path: config.db_path.clone(),
@@ -51,8 +51,7 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         Ok(api)
     }
 
-    pub fn new_temporary(home_dir: Option<String>) -> YHResult<YAPI<YMemoryStore, YPersistentStore>> {
-        let config = YConfig::read(home_dir)?;
+    pub fn new_temporary(config: YConfig) -> YHResult<YAPI<YMemoryStore, YPersistentStore>> {
         let mem_config = YMemoryConfig {
             mode: YMemoryMode {
                 path: config.db_path.clone(),
