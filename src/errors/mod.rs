@@ -62,6 +62,10 @@ error_chain! {
         description("Parsing failure")
     }
 
+    InvalidDifficulty {
+        description("Invalid difficulty")
+    }
+
     InvalidCoinKind {
         description("Invalid coin kind")
     }
@@ -74,12 +78,40 @@ error_chain! {
         description("Invalid message rpc method")
     }
 
+    InvalidMessagePrefix {
+        description("Invalid message prefix")
+    }
+
     InvalidMessageKind {
         description("Invalid message kind")
     }
 
     InvalidMessageStatus {
         description("Invalid message status")
+    }
+
+    InvalidRequest {
+        description("Invalid request")
+    }
+
+    InvalidResponse {
+        description("Invalid response")
+    }
+
+    InvalidIp {
+        description("Invalid ip")
+    }
+
+    MaxConnectionsReached {
+        description("Max connections reached")
+    }
+
+    FailedConnection {
+        description("Failed connection")
+    }
+
+    NotConnected {
+        description("Not connected")
     }
 
     Other(desc: String) {

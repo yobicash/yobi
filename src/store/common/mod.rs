@@ -1,5 +1,29 @@
 use errors::*;
 
+#[derive(Debug)]
+pub enum YStorageKind {
+    Persistent=0,
+    Memory=1,
+}
+
+impl Default for YStorageKind {
+    fn default() -> YStorageKind {
+        YStorageKind::Persistent
+    }
+}
+
+#[derive(Debug)]
+pub enum YStorageMode {
+    Full=0,
+    Light=1,
+}
+
+impl Default for YStorageMode {
+    fn default() -> YStorageMode {
+        YStorageMode::Full
+    }
+}
+
 pub type YStoreBuck = Vec<u8>;
 
 pub type YStoreKey = Vec<u8>;

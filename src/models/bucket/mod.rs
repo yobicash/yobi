@@ -7,11 +7,13 @@ use errors::*;
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum YBucket {
     Transactions=0,
-    Data=1,
-    Coinbases=2,
-    Wallets=3,
-    PeersByIp=4,
-    PeersByLastTime=5,
+    Coinbases=1,
+    Data=2,
+    UTXO=3,
+    Wallets=4,
+    PeersByIp=5,
+    PeersByLastTime=6,
+    Keys=7,
     Unknown,
 }
 
@@ -25,11 +27,13 @@ impl From<u32> for YBucket {
     fn from(n: u32) -> YBucket {
         match n {
             0 => YBucket::Transactions,
-            1 => YBucket::Data,
-            2 => YBucket::Coinbases,
-            3 => YBucket::Wallets,
-            4 => YBucket::PeersByIp,
-            5 => YBucket::PeersByLastTime,
+            1 => YBucket::Coinbases,
+            2 => YBucket::Data,
+            3 => YBucket::UTXO,
+            4 => YBucket::Wallets,
+            5 => YBucket::PeersByIp,
+            6 => YBucket::PeersByLastTime,
+            7 => YBucket::Keys,
             _ => YBucket::Unknown,
         }
     }

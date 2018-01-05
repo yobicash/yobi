@@ -1,36 +1,45 @@
 use bytes::{BytesMut, BufMut, BigEndian, ByteOrder};
 use serde_json;
 use errors::*;
-use std::net::Ipv4Addr;
+use std::net::{SocketAddr, SocketAddrV4, IpAddr, Ipv4Addr};
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub struct YHost {
-    pub address: Ipv4Addr,
-    pub port: u16,
-}
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+pub struct YHost(pub SocketAddr);
 
 impl Default for YHost {
     fn default() -> YHost {
-        YHost {
-            address: Ipv4Addr::new(127, 0, 0, 1),
-            port: 2112,
-        }
+        YHost::new([127, 0, 0 , 1], 2112)
     }
 }
 
 impl YHost {
     pub fn new(addr: [u8; 4], port: u16) -> YHost {
-        YHost {
-            address: Ipv4Addr::from(addr),
-            port: port,
+        let ip = Ipv4Addr::from(addr);
+        YHost(SocketAddr::V4(SocketAddrV4::new(ip, port)))
+    }
+
+    pub fn internal(&self) -> SocketAddr {
+        self.0.clone()
+    }
+
+    pub fn ip(&self) -> YHResult<Ipv4Addr> {
+        match self.0.ip() {
+            IpAddr::V4(ip) => { Ok(ip) },
+            _ => {
+                return Err(YHErrorKind::InvalidIp.into());
+            }
         }
     }
 
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn port(&self) -> u16 {
+        self.0.port()
+    }
+
+    pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         let mut buf = BytesMut::new();
-        buf.put(&self.address.octets()[..]);
-        buf.put_u16::<BigEndian>(self.port);
-        buf.to_vec()
+        buf.put(&self.ip()?.octets()[..]);
+        buf.put_u16::<BigEndian>(self.port());
+        Ok(buf.to_vec())
     }
 
     pub fn from_bytes(buf: &[u8]) -> YHResult<YHost> {
@@ -39,12 +48,9 @@ impl YHost {
         }
         let mut b = BytesMut::new();
         b.extend_from_slice(buf);
-        let addr = Ipv4Addr::new(b[0], b[1], b[2], b[3]);
+        let addr: [u8; 4] = [b[0], b[1], b[2], b[3]];
         let port = BigEndian::read_u16(b.get(4..).unwrap());
-        let host = YHost {
-            address: addr,
-            port: port,
-        };
+        let host = YHost::new(addr, port);
         Ok(host)
     }
 

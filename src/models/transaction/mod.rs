@@ -10,6 +10,7 @@ use models::bucket::*;
 use models::data::*;
 use models::coinbase::*;
 use models::coin::*;
+use models::utxo::*;
 use models::wallet::*;
 use errors::*;
 
@@ -90,9 +91,9 @@ impl YTransaction {
     }
 
     pub fn list_ancestors<S: YStorage>(&self, store: &S) -> YHResult<(Vec<YTransaction>, Vec<YCoinbase>)> {
-        let descendant_tx = self.internal();
-        let mut height = descendant_tx.outputs[0].height;
-        let mut inputs = descendant_tx.inputs;
+        let start_tx = self.internal();
+        let mut height = start_tx.outputs[0].height;
+        let mut inputs = start_tx.inputs;
         let mut ancestor_tx_ids = Vec::new();
         let mut ancestor_txs = Vec::new();
         let mut ancestor_cb_ids = Vec::new();
@@ -263,7 +264,7 @@ impl YTransaction {
             } else {
                 Some(output.data.clone().unwrap().tag)
             };
-            let amount = output.amount;
+            let amount = output.amount.clone();
             let coin = YCoin {
                 date: date.clone(),
                 sk: sks[idx],
@@ -277,9 +278,12 @@ impl YTransaction {
             };
             wallet.ucoins.push(coin);
             if has_data {
-                let data = YData::new(&output.data.unwrap())?;
+                let _data = output.clone().data.unwrap();
+                let data = YData::new(&_data)?;
                 data.create(store)?;
             }
+            let _utxo = LibUTXO::from_output(&output, id, idx as u32);
+            YUTXO::new(&_utxo).create(store)?;
         }
 
         let tx = YTransaction(_tx);
@@ -350,7 +354,7 @@ impl YTransaction {
                 Some(output.data.clone().unwrap().tag)
             };
             let height = output.height;
-            let amount = output.amount;
+            let amount = output.amount.clone();
             let coin = YCoin {
                 date: date.clone(),
                 sk: sks[idx],
@@ -363,6 +367,8 @@ impl YTransaction {
                 amount: amount,
             };
             wallet.ucoins.push(coin);
+            let _utxo = LibUTXO::from_output(&output, id, idx as u32);
+            YUTXO::new(&_utxo).create(store)?;
         }
 
         let tx = YTransaction(_tx);
@@ -435,7 +441,7 @@ impl YTransaction {
                 Some(output.data.clone().unwrap().tag)
             };
             let height = output.height;
-            let amount = output.amount;
+            let amount = output.amount.clone();
             let coin = YCoin {
                 date: date.clone(),
                 sk: sks[idx],
@@ -449,9 +455,12 @@ impl YTransaction {
             };
             wallet.ucoins.push(coin);
             if has_data {
-                let data = YData::new(&output.data.unwrap())?;
+                let _data = output.clone().data.unwrap();
+                let data = YData::new(&_data)?;
                 data.create(store)?;
             }
+            let _utxo = LibUTXO::from_output(&output, id, idx as u32);
+            YUTXO::new(&_utxo).create(store)?;
         }
 
         let tx = YTransaction(_tx);

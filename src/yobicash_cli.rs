@@ -1,10 +1,10 @@
-extern crate yobicash_rs;
 extern crate structopt;
+extern crate yobicash;
 
-use yobicash_rs::cli::client::*;
 use structopt::StructOpt;
+use yobicash::cli::client::*;
 
 fn main() {
-  let opt = YobicashClientOpt::from_args();
+  let opt = YClientOpt::from_args();
   println!("yobicash client opt: {:?}", opt) 
 }

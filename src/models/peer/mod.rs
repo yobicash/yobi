@@ -38,7 +38,7 @@ impl YPeer {
 
     pub fn to_bytes(&self) -> YHResult<Vec<u8>> {
         let mut buf = BytesMut::new();
-        buf.put(&self.host.to_bytes());
+        buf.put(&self.host.to_bytes()?);
         buf.put(&self.last_time.to_bytes()[..]);
         Ok(buf.to_vec())
     }
@@ -72,7 +72,7 @@ impl YPeer {
     pub fn by_ip_key(&self) -> YHResult<YStoreKey> {
         self.check()?;
         let mut key = Vec::new();
-        key.put(&self.host.address.octets()[..]);
+        key.put(&self.host.ip()?.octets()[..]);
         Ok(key)
     }
 

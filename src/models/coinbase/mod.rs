@@ -3,12 +3,14 @@ use libyobicash::crypto::hash::digest::YDigest64;
 use libyobicash::crypto::key::YKey32;
 use libyobicash::crypto::elliptic::keys::*;
 use libyobicash::coinbase::YCoinbase as LibCoinbase;
+use libyobicash::utxo::YUTXO as LibUTXO;
 use serde_json;
 use std::cmp::min;
 use store::common::*;
 use models::bucket::*;
 use models::transaction::*;
 use models::coin::*;
+use models::utxo::*;
 use models::wallet::*;
 use errors::*;
 
@@ -136,6 +138,11 @@ impl YCoinbase {
                               height, has_data,
                               tag, &amount)?;
         
+        for idx in 0.._cb.outputs.len() as u32 {
+            let _utxo = LibUTXO::from_output(&_cb.outputs[idx as usize], id, idx as u32);
+            YUTXO::new(&_utxo).create(store)?;
+        }
+        
         let mut wallet = YWallet::get(store, key, wallet_name)?;
         wallet.balance += amount;
         wallet.ucoins.push(coin);
@@ -179,6 +186,11 @@ impl YCoinbase {
                               height, has_data,
                               tag, &amount)?;
         
+        for idx in 0.._cb.outputs.len() as u32 {
+            let _utxo = LibUTXO::from_output(&_cb.outputs[idx as usize], id, idx as u32);
+            YUTXO::new(&_utxo).create(store)?;
+        }
+
         let mut wallet = YWallet::get(store, key, wallet_name)?;
         wallet.balance += amount;
         wallet.ucoins.push(coin);

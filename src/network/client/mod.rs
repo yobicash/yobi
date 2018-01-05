@@ -1,67 +1,72 @@
-//use tokio_core::reactor::Core;
-//use tokio_proto::TcpClient;
-//use std::net::{SocketAddr, SocketAddrV4};
-//use config::*;
-//use network::protocol::YMessageProto;
-use network::server::{YServerTransport, YServerCodec};
+use std::net::SocketAddr;
+use std::net::TcpStream;
+use std::time::Duration;
+use std::thread;
+use std::io::prelude::*;
+use std::io::ErrorKind as IOErrorKind;
+use config::*;
+use errors::*;
 
 #[derive(Debug)]
 pub struct YClient {
-    pub codec: YServerCodec,
-    pub transport: YServerTransport,
+    pub address: SocketAddr,
+    pub connection: TcpStream,
 }
 
 impl YClient {
-    pub fn new(c: YServerCodec, t: YServerTransport) -> YClient {
-        match c {
-            YServerCodec::Binary => {
-                panic!("Not implemented")
-            },
-            _ => {}
-        }
-
-        match t {
-            YServerTransport::UDP => {
-                panic!("Not implemented")
-            },
-            _ => {}
-        }
-        YClient {
-            codec: c,
-            transport: t,
-        }
-    }
-
-    /* TODO: use tokio_core tcp_stream or *pnet*
-    pub fn connect(&self, addr: Option<SocketAddr>) {
-        match self.transport {
-            YServerTransport::UDP => {
-                panic!("Not implemented")
-            },
-            _ => {},
-        }
-
-        match self.codec {
-            YServerCodec::Binary => {
-                panic!("Not implemented")
-            },
-            _ => {},
-        }
-
-        let client = TcpClient::new(YMessageProto);
-        
-        let address = if addr.is_none() {
-            let local = YConfig::read(None).unwrap().local;
-            let _addr = SocketAddrV4::new(local.address, local.port);
-            SocketAddr::V4(_addr)
+    pub fn new(address: Option<SocketAddr>) -> YHResult<YClient> {
+      
+        let address = if address.is_some() {
+            address.unwrap()
         } else {
-            addr.unwrap() 
+            YConfig::read()?.host.internal()
         };
-       
-        let core = Core::new().unwrap();
-        let handle = core.handle();
 
-        client.connect(&address, &handle)
+        let connection = TcpStream::connect(address)?;
+
+        let client = YClient {
+            address: address,
+            connection: connection,
+        };
+
+        Ok(client)
     }
-    */
+
+    fn read_reply(&mut self) -> YHResult<Vec<u8>> {
+        let mut msg = Vec::new();
+        loop {
+            match self.connection.read_to_end(&mut msg) {
+                Ok(_) => break,
+                Err(ref e) if e.kind() == IOErrorKind::WouldBlock => {
+                    let t = Duration::from_millis(10);
+                    thread::sleep(t);
+                },
+                Err(e) => {
+                    return Err(YHErrorKind::IO(e).into());
+                },
+            } 
+        }
+        
+        // TODO: decode the reply
+        
+        Ok(msg)
+    }
+
+    fn handle_reply(&mut self) -> YHResult<()> {
+        let reply = self.read_reply()?;
+        
+        // TODO handle the reply
+        
+        println!("reply from {:?}: {:?}", self.address, reply);
+        Ok(())
+    }
+
+    pub fn send_request(&mut self, msg: &[u8]) -> YHResult<()> {
+        self.connection.write(msg)?;
+        self.connection.flush()?;
+
+        self.handle_reply()?;
+
+        Ok(())
+    }
 }

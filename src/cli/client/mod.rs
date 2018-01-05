@@ -1,14 +1,12 @@
 #[derive(StructOpt, Debug)]
 #[structopt(name="yobicash-cli", about="The Yobicash client", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
-pub enum YobicashClientOpt {
+pub enum YClientOpt {
     #[structopt(name="connect", about="Connect to a Yobicash node server", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Connect {
         #[structopt(short="H", long="host", help="Set a custom host")]
         host: Option<String>,
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
-        #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },
@@ -18,8 +16,6 @@ pub enum YobicashClientOpt {
         host: Option<String>,
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
-        #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },
@@ -29,8 +25,6 @@ pub enum YobicashClientOpt {
         host: Option<String>,
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
-        #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },
@@ -41,8 +35,6 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
-        #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
         cmd: CreateCommands,
@@ -54,8 +46,6 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
-        #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
         cmd: PushCommands,
@@ -67,8 +57,6 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
-        #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
         cmd: SendCommands,
@@ -80,8 +68,6 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
-        #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
         cmd: ListCommands,
@@ -93,8 +79,6 @@ pub enum YobicashClientOpt {
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
         #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
-        #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
         #[structopt(subcommand)]
         cmd: GetCommands,
@@ -109,8 +93,6 @@ pub enum YobicashClientOpt {
         host: Option<String>,
         #[structopt(short="p", long="port", help="Set a custom port")]
         port: Option<u16>,
-        #[structopt(short="C", long="config", help="Set a custom config file path")]
-        path: Option<String>,
         #[structopt(short="v", long="verbose", help="Activate verbose mode")]
         verbose: bool,
     },
@@ -187,6 +169,16 @@ pub enum ListCommands {
     Transactions {
         #[structopt(short="w", long="wallet", help="Set the wallet from where to get the transactions")]
         name: String,
+    },
+    #[structopt(name="txutxos", about="List a Yobicash transaction utxos", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
+    TxUTXOs {
+        #[structopt(long="tx_id", help="Set the id of the transaction")]
+        tx_id: String,
+    },
+    #[structopt(name="cbutxos", about="List a Yobicash coinbase utxos", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
+    CbUTXOs {
+        #[structopt(long="tx_id", help="Set the id of the coinbase")]
+        tx_id: String,
     },
     #[structopt(name="ancestors", about="List a Yobicash transaction ancestors", version="0.1.0", author="Christian Nyumbayire <christian@yobicash.org>")]
     Ancestors {

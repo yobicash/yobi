@@ -12,7 +12,6 @@ pub enum YRPCMethod {
     GetTx=5,
     ConfirmTx=6,
     GetCb=7,
-    ConfirmCb=8,
     Unknown,
 }
 
@@ -33,7 +32,6 @@ impl From<u32> for YRPCMethod {
             5 => YRPCMethod::GetTx,
             6 => YRPCMethod::ConfirmTx,
             7 => YRPCMethod::GetCb,
-            8 => YRPCMethod::ConfirmCb,
             _ => YRPCMethod::Unknown,
         }
     }

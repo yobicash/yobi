@@ -24,18 +24,17 @@ pub struct YAPI<M, P: YStorage> {
 }
 
 impl YAPI<YMemoryStore, YPersistentStore> {
-    // TODO: parametrize new
     pub fn new(config: YConfig, read_only: bool) -> YHResult<YAPI<YMemoryStore, YPersistentStore>> {
         let mem_config = YMemoryConfig {
             mode: YMemoryMode {
-                path: config.db_path.clone(),
+                path: YConfig::db_path()?,
                 read_only: read_only,
             }, 
         };
         let mem_store = YMemoryStore::open(mem_config)?;
         let per_config = YPersistentConfig {
             mode: YPersistentMode::Persistent {
-                path: config.db_path.clone(),
+                path: YConfig::db_path()?,
                 read_only: read_only,
             },
         };
@@ -54,7 +53,7 @@ impl YAPI<YMemoryStore, YPersistentStore> {
     pub fn new_temporary(config: YConfig) -> YHResult<YAPI<YMemoryStore, YPersistentStore>> {
         let mem_config = YMemoryConfig {
             mode: YMemoryMode {
-                path: config.db_path.clone(),
+                path: YConfig::db_path()?,
                 read_only: false,
             }, 
         };
@@ -112,8 +111,9 @@ impl YAPI<YMemoryStore, YPersistentStore> {
     }
 
     pub fn put_peer(&mut self, host: YHost) -> YHResult<()> {
+        let ip = host.ip()?;
         let peer = YPeer::new(host);
-        if !YPeer::lookup_by_ip(&self.store.persistent, host.address)? {
+        if !YPeer::lookup_by_ip(&self.store.persistent, ip)? {
             peer.create(&mut self.store.persistent)?;
         } else {
             peer.update(&mut self.store.persistent)?;
@@ -224,6 +224,10 @@ impl YAPI<YMemoryStore, YPersistentStore> {
         Ok(transactions)
     }
 
+    pub fn list_transaction_utxos(&self, id: YDigest64) -> YHResult<Vec<YUTXO>>{
+        YUTXO::list_by_tx(&self.store.persistent, id)
+    }
+
     pub fn list_transaction_ancestors(&self, id: YDigest64) -> YHResult<(Vec<YTransaction>, Vec<YCoinbase>)>{
         let tx = self.get_transaction(id)?;
         tx.list_ancestors(&self.store.persistent)
@@ -262,6 +266,10 @@ impl YAPI<YMemoryStore, YPersistentStore> {
             }
         }
         Ok(coinbases)
+    }
+
+    pub fn list_coinbase_utxos(&self, id: YDigest64) -> YHResult<Vec<YUTXO>>{
+        YUTXO::list_by_tx(&self.store.persistent, id)
     }
 
     pub fn mine(&mut self, wallet: &str, id: YDigest64, incr: u32, fee_pk: YPublicKey) -> YHResult<(YCoinbase, u32)> {
